@@ -35,7 +35,7 @@ const WelcomeScreen = ({ navigation }) => {
 
     const timer = setTimeout(() => {
       glitchAnimation.stop();
-      navigation.replace('MainApp');
+      navigation.replace('Onboarding');
     }, 5000);
 
     return () => clearTimeout(timer);
