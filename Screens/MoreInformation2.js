@@ -1,35 +1,83 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Image,
+  Platform,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function MoreInformation2({ navigation }) {
-  const [profileImage, setProfileImage] = useState(null); // placeholder for now
+  const [profileImage, setProfileImage] = useState(null);
+
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      alert('Permission to access media library is required!');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setProfileImage(result.assets[0].uri);
+    }
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <Ionicons name="chevron-back" size={25} color="#1E2C3A" />
+      </TouchableOpacity>
+
       <Text style={styles.title}>More Information</Text>
 
-      <Text>Emergency Contact:</Text>
-      <TextInput style={styles.input} placeholder="Emergency" />
-
-      <Text>Your Number:</Text>
-      <TextInput style={styles.input} placeholder="Number" keyboardType="phone-pad" />
-
-      {/* Profile Picture Upload Section */}
-      <View style={styles.imageUploadContainer}>
-        <Image
-          source={
-            profileImage
-              ? { uri: profileImage }
-              : require('../assets/vigilante-logo.png') // make sure you have this in your assets folder
-          }
-          style={styles.profileImage}
+      <View style={styles.inputGroup}>
+        <Text style={styles.label}>Emergency Contact:</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Emergency contact number"
+          placeholderTextColor="#8391A1"
+          keyboardType="phone-pad"
         />
-        <TouchableOpacity style={styles.chooseButton} onPress={() => alert('Image picker coming soon')}>
-          <Text style={styles.chooseButtonText}>Choose Picture</Text>
-        </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Welcome')}>
+      <View style={styles.inputGroup}>
+        <Text style={styles.label}>Your Number:</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Your phone number"
+          placeholderTextColor="#8391A1"
+          keyboardType="phone-pad"
+        />
+      </View>
+
+      <TouchableOpacity style={styles.uploadBox} onPress={pickImage}>
+        {profileImage ? (
+          <Image source={{ uri: profileImage }} style={styles.uploadedImage} />
+        ) : (
+          <>
+            <Ionicons name="image-outline" size={40} color="#B0B0B0" />
+            <Text style={styles.uploadText}>
+              <Text style={styles.clickText}>Click to upload</Text> or drag and drop
+            </Text>
+            <Text style={styles.fileTypeText}>JPG, JPEG, PNG less than 1MB</Text>
+            <Text style={styles.noteText}>*Upload an unfiltered image of yourself</Text>
+          </>
+        )}
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('MainTabs')}>
         <Text style={styles.buttonText}>Complete</Text>
       </TouchableOpacity>
     </ScrollView>
@@ -41,45 +89,98 @@ const styles = StyleSheet.create({
     padding: 30,
     backgroundColor: '#fff',
     flexGrow: 1,
+    paddingTop: 35,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: '#fff',
     justifyContent: 'center',
+    alignItems: 'center',
+    position: 'absolute',
+    top: 80,
+    left: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+    zIndex: 10,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: 100,
+    marginBottom: 40,
     textAlign: 'center',
+    marginTop: 50,
+    marginRight: -20,
+  },
+  inputGroup: {
+    marginBottom: 15,
+    paddingVertical: 3,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#555',
+    marginBottom: 5,
   },
   input: {
     height: 50,
-    borderColor: '#ddd',
+    borderColor: '#DADADA',
+    backgroundColor: '#F7F8F9',
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 15,
-    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  imageUploadContainer: {
+  uploadBox: {
+    borderWidth: 2,
+    borderColor: '#ccc',
+    borderStyle: 'dashed',
+    borderRadius: 10,
+    padding: 30,
     alignItems: 'center',
-    marginVertical: 30,
+    justifyContent: 'center',
+    marginVertical: 40,
+    backgroundColor: '#FAFAFA',
   },
-  profileImage: {
+  uploadedImage: {
     width: 120,
     height: 120,
-    borderRadius: 60,
-    backgroundColor: '#eee',
+    borderRadius: 10,
+    resizeMode: 'cover',
     marginBottom: 10,
   },
-  chooseButton: {
-    backgroundColor: '#ccc',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
+  uploadText: {
+    fontSize: 16,
+    color: '#555',
+    marginTop: 10,
+    textAlign: 'center',
   },
-  chooseButtonText: {
-    color: '#333',
+  clickText: {
+    color: '#00A8E8',
     fontWeight: 'bold',
   },
+  fileTypeText: {
+    fontSize: 13,
+    color: '#999',
+    marginTop: 5,
+  },
+  noteText: {
+    fontSize: 12,
+    color: '#aaa',
+    marginTop: 10,
+    fontStyle: 'italic',
+    textAlign: 'center',
+  },
   button: {
-    backgroundColor: '#000',
+    backgroundColor: '#1E2C3A',
     paddingVertical: 15,
     borderRadius: 8,
     marginTop: 10,

@@ -1,38 +1,94 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Animated,
+  TouchableOpacity,
+} from 'react-native';
 
 const OnboardingScreen = ({ navigation }) => {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.parallel([
+        Animated.sequence([
+          Animated.timing(scaleAnim, {
+            toValue: 1.05,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(scaleAnim, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.sequence([
+          Animated.timing(rotateAnim, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(rotateAnim, {
+            toValue: -1,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(rotateAnim, {
+            toValue: 0,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+        ]),
+      ])
+    ).start();
+  }, []);
+
+  const rotate = rotateAnim.interpolate({
+    inputRange: [-1, 0, 1],
+    outputRange: ['-2deg', '0deg', '2deg'],
+  });
+
   return (
     <View style={styles.container}>
-      <Image
-        source={require('../assets/vigilante-logo.png')} // replace with your image
-        style={styles.image}
+      <Animated.Image
+        source={require('../assets/Onboarding.png')}
+        style={[
+          styles.image,
+          {
+            transform: [
+              { scale: scaleAnim },
+              { rotate: rotate },
+            ],
+          },
+        ]}
         resizeMode="contain"
       />
-      <Text style={styles.title}>Stay Safe!</Text>
-      <Text style={styles.subtitle}>
-        Your safety companion at all times.
-        Your safety matters to us at Vigilante. By using this app, you agree to share your location, receive alerts, and allow emergency contact access.
-      </Text>
-       {/* Added buttons */}
-      <TouchableOpacity
-        style={[styles.button, styles.createAccountButton]}
-        onPress={() => navigation.navigate('SignUp')} // navigates to SignUp screen
-      >
-        <Text style={[styles.buttonText, styles.createAccountText]}>Create Account</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => navigation.navigate('LogIn')} // navigates to LogIn screen
-      >
-        <Text style={styles.buttonText}>LogIn Now</Text>
-      </TouchableOpacity>
-
-     
-
       
-        
+      <View style={styles.contentContainer}>
+        <Text style={styles.title}>Stay Safe!</Text>
+        <Text style={styles.subtitle}>
+          Your safety companion at all times. Your safety matters to us at Vigilante. By using this app, you agree to share your location, receive alerts, and allow emergency contact access.
+        </Text>
+
+        <TouchableOpacity
+          style={[styles.button, styles.createAccountButton]}
+          onPress={() => navigation.navigate('SignUp')}
+        >
+          <Text style={[styles.buttonText, styles.createAccountText]}>Create Account</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => navigation.navigate('LogIn')}
+        >
+          <Text style={styles.buttonText}>LogIn Now</Text>
+        </TouchableOpacity>        
+      </View>
+
     </View>
   );
 };
@@ -42,15 +98,20 @@ export default OnboardingScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff', // change to your Figma background color
+    backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
   },
   image: {
+    width: '120%',
+    height: 400,
+    marginBottom: -70,
+  },
+  contentContainer: {
     width: '100%',
-    height: 250,
-    marginBottom: 30,
+    marginTop: 110,  
+    alignItems: 'center',
   },
   title: {
     fontSize: 24,
@@ -66,27 +127,24 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   button: {
-    backgroundColor: '#000', // black or your Figma primary color
+    backgroundColor: 'transparent',
+    width: '100%',
     paddingVertical: 15,
-    paddingHorizontal: 60,
-    borderRadius: 30,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#2F4156',
     marginBottom: 15,
+    alignItems: 'center',
+  },
+  createAccountButton: {
+    backgroundColor: '#2F4156',
   },
   buttonText: {
-    color: '#fff',
+    color: '#2F4156',
     fontSize: 16,
     fontWeight: 'bold',
   },
-  createAccountButton: {
-    backgroundColor: '#444', // different color to distinguish or same as needed
-  },
   createAccountText: {
     color: '#fff',
-  },
-  loginText: {
-    color: '#000',
-    fontSize: 16,
-    textDecorationLine: 'underline',
-    marginTop: 5,
   },
 });
