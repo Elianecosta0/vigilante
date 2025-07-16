@@ -46,7 +46,7 @@ export default function LogIn({ navigation }) {
       <View style={{ height: 50 }} />
 
       <View>
-        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('MainTabs')}>
+        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('MainApp')}>
           <Text style={styles.buttonText}>Log In</Text>
         </TouchableOpacity>
 

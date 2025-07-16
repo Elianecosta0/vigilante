@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
-export default function NotificationsScreen() {
+export default function SelfDefenceScreen() {
     const navigation = useNavigation();
   return (
      <View style={styles.container}>
@@ -17,7 +17,7 @@ export default function NotificationsScreen() {
  
        {/* Main content */}
        <View style={styles.content}>
-         <Text>Notifications!</Text>
+         <Text>SelfDefence Screen!</Text>
        </View>
      </View>
    );
