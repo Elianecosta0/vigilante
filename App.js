@@ -29,6 +29,9 @@ import CustomDrawerContent from './components/CustomDrawerContent';
 
 import CustomTabBar from './components/CustomerTabBar';
 
+
+import ChatbotScreen from './Screens/ChatbotScreen';
+
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 const Drawer = createDrawerNavigator();
@@ -84,12 +87,15 @@ export default function App() {
         <Stack.Screen name="MoreInformation1" component={MoreInformation1} options={{ headerShown: false }} />
         <Stack.Screen name="MoreInformation2" component={MoreInformation2} options={{ headerShown: false }} />
         <Stack.Screen name="MyDetails" component={MyDetails} options={{ headerShown: false }} />
-
+        <Stack.Screen name="Chatbot" component={ChatbotScreen} />
         
         {/* 👇 Replaces MainTabs with DrawerNavigator */}
         <Stack.Screen name="MainApp" component={DrawerNavigator} options={{ headerShown: false }} />
       </Stack.Navigator>
+      
     </NavigationContainer>
+
+    
   );
 }
 
