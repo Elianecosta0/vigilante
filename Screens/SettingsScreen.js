@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Ionicons } from '@expo/vector-icons';
+import { firebase } from '../config';
 
 const SettingsScreen = ({ navigation }) => {
   const handleDeleteAccount = () => {
@@ -10,6 +11,15 @@ const SettingsScreen = ({ navigation }) => {
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: () => {/* handle deletion */} },
     ]);
+  };
+
+    const handleLogout = async () => {
+    try {
+      await firebase.auth().signOut();
+      navigation.navigate('LogIn');
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
   };
 
   return (
@@ -53,7 +63,7 @@ const SettingsScreen = ({ navigation }) => {
           <Text style={styles.optionText}>FAQ</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.optionRow}>
+        <TouchableOpacity onPress={handleLogout} style={styles.optionRow}>
           <Icon name="log-out-outline" size={20} />
           <Text style={styles.optionText}>Log out</Text>
         </TouchableOpacity>

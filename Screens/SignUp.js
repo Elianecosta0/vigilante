@@ -1,7 +1,52 @@
-import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  Image,
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { auth } from '../config';
 
-export default function SignUp({ navigation }) {
+export default function SignUp() {
+  const navigation = useNavigation();
+
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  const handleSignUp = async () => {
+    if (!username || !password || !confirmPassword) {
+      Alert.alert('Validation Error', 'All fields are required.');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      Alert.alert('Password Mismatch', 'Passwords do not match.');
+      return;
+    }
+
+    try {
+      const email = `${username}@vigilante.com`; // simulate email from username
+      const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+
+      const { uid } = userCredential.user;
+
+      // Navigate to MoreInfo and pass user data
+      navigation.navigate('MoreInformation1', {
+        uid,
+        email,
+        username,
+      });
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Sign Up Error', error.message);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.logoContainer}>
@@ -25,6 +70,9 @@ export default function SignUp({ navigation }) {
           placeholder="User Name"
           style={styles.input}
           placeholderTextColor="#8391A1"
+          value={username}
+          onChangeText={setUsername}
+          autoCapitalize="none"
         />
       </View>
 
@@ -33,8 +81,10 @@ export default function SignUp({ navigation }) {
         <TextInput
           placeholder="Password"
           style={styles.input}
-          secureTextEntry
           placeholderTextColor="#8391A1"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
         />
       </View>
 
@@ -43,18 +93,17 @@ export default function SignUp({ navigation }) {
         <TextInput
           placeholder="Confirm Password"
           style={styles.input}
-          secureTextEntry
           placeholderTextColor="#8391A1"
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+          secureTextEntry
         />
       </View>
 
       <View style={{ height: 20 }} />
 
       <View>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => navigation.navigate('MoreInformation1')}
-        >
+        <TouchableOpacity style={styles.button} onPress={handleSignUp}>
           <Text style={styles.buttonText}>Sign Up</Text>
         </TouchableOpacity>
 
@@ -71,6 +120,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 30,
     backgroundColor: '#fff',
+    justifyContent: 'center',
   },
   logoContainer: {
     alignItems: 'center',
@@ -121,9 +171,13 @@ const styles = StyleSheet.create({
     color: '#fff',
     textAlign: 'center',
     fontWeight: 'bold',
+    fontSize: 16,
   },
   linkText: {
     color: '#1E2C3A',
     textAlign: 'center',
+    fontWeight: '600',
+    fontSize: 14,
   },
 });
+
