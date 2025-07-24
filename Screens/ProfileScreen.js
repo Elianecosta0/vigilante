@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
 const ProfileScreen = () => {
+  const navigation = useNavigation();
   const [name, setName] = useState('Sowda');
   const [dob, setDob] = useState('25/10/2002');
   const [gender, setGender] = useState('Female');
@@ -61,7 +63,21 @@ const ProfileScreen = () => {
         </View>
       </ScrollView>
 
-      <TouchableOpacity style={styles.saveButton}>
+      <TouchableOpacity
+  style={styles.saveButton}
+  onPress={() => {
+    navigation.navigate('MyDetails', {
+      name,
+      dob,
+      gender,
+      height,
+      weight,
+      feature,
+      emergencyContact,
+      yourNumber,
+      password,
+    });
+  }}>
         <Text style={styles.saveButtonText}>Save Changes</Text>
       </TouchableOpacity>
     </SafeAreaView>
