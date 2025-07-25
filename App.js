@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 
+// Screens
 import WelcomeScreen from './Screens/WelcomeScreen';
 import OnboardingScreen from './Screens/OnboardingScreen';
 import LogIn from './Screens/LogIn';
@@ -18,14 +19,14 @@ import NotificationsScreen from './Screens/NotificationsScreen';
 import ProfileScreen from './Screens/ProfileScreen';
 import MyDetails from './Screens/MyDetails';
 import DonationScreen from './Screens/DonationScreen';
+import DonationDetails from './Screens/DonationDetail';
 import MerchandiseScreen from './Screens/MerchandiseScreen';
 import SettingsScreen from './Screens/SettingsScreen';
 import SelfDefenseScreen from './Screens/SelfDefenceScreen';
 
 import CustomDrawerContent from './components/CustomDrawerContent';
 import CustomTabBar from './components/CustomerTabBar';
-
-
+import SeeAll from './Screens/SeeAll';
 import ChatbotScreen from './Screens/ChatbotScreen';
 
 const Stack = createNativeStackNavigator();
@@ -47,17 +48,17 @@ function BottomTabs() {
   );
 }
 
+
+// Drawer Navigator
 function DrawerNavigator() {
   return (
     <Drawer.Navigator
-      screenOptions={{
-        headerShown: false,
-        drawerType: 'front',
-      }}
+      screenOptions={{ headerShown: false, drawerType: 'front' }}
       drawerContent={(props) => <CustomDrawerContent {...props} />}
     >
-      <Drawer.Screen name="Main" component={BottomTabs} />
-      <Drawer.Screen name="Self Defense Course" component={SelfDefenseScreen} />
+      <Drawer.Screen name="MainTabs" component={MainTabs} />
+      <Drawer.Screen name="Self Defense" component={SelfDefenseScreen} />
+
       <Drawer.Screen name="Donations" component={DonationScreen} />
       <Drawer.Screen name="Merchandise" component={MerchandiseScreen} />
       <Drawer.Screen name="Settings" component={SettingsScreen} />
@@ -65,28 +66,27 @@ function DrawerNavigator() {
   );
 }
 
+// App Entry
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Welcome">
-        <Stack.Screen name="Welcome" component={WelcomeScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="LogIn" component={LogIn} options={{ headerShown: false }} />
-        <Stack.Screen name="SignUp" component={SignUp} options={{ headerShown: false }} />
-        <Stack.Screen name="ForgotPassword" component={ForgotPassword} options={{ headerShown: false }} />
-        <Stack.Screen name="MoreInformation1" component={MoreInformation1} options={{ headerShown: false }} />
-      
-        <Stack.Screen name="MyDetails" component={MyDetails} options={{ headerShown: false }} />
 
-        
-       
-        <Stack.Screen name="MainApp" component={DrawerNavigator} options={{ headerShown: false }} />
+      <Stack.Navigator initialRouteName="Welcome" screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Welcome" component={WelcomeScreen} />
+        <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+        <Stack.Screen name="LogIn" component={LogIn} />
+        <Stack.Screen name="SignUp" component={SignUp} />
+        <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
+        <Stack.Screen name="MoreInformation1" component={MoreInformation1} />
+        <Stack.Screen name="MoreInformation2" component={MoreInformation2} />
+        <Stack.Screen name="MyDetails" component={MyDetails} />
+        <Stack.Screen name="SeeAll" component={SeeAll} />
+        <Stack.Screen name="Chatbot" component={ChatbotScreen} />
+        <Stack.Screen name="DonationDetails" component={DonationDetails} />
+        <Stack.Screen name="MainApp" component={DrawerNavigator} />
+
       </Stack.Navigator>
-      
     </NavigationContainer>
-
-    
   );
 }
-
 
