@@ -7,13 +7,13 @@ export default function CommunityScreen() {
   const navigation = useNavigation();
 
   const handleAddPress = () => {
-    // TODO: Define what this button should do
     alert('Plus button pressed!');
-    // Example: navigation.navigate('CreatePost')
+    // navigation.navigate('CreatePost');
   };
 
   return (
     <View style={styles.container}>
+      {/* Header with drawer and add icon */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.openDrawer()}>
           <Ionicons name="menu" size={30} color="#000" />
@@ -75,3 +75,4 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+
