@@ -42,10 +42,10 @@
 
     "react-native-vector-icons": "^10.2.0",
     "react-native-maps": "1.20.1",
-    "expo-location": "~18.1.6"
+    "expo-location": "~18.1.6",
 
-    "react-native-uuid": "^2.0.3",
-    "react-native-vector-icons": "^10.2.0"
+    "react-native-uuid": "^2.0.3"
+  
 
   },
   "devDependencies": {

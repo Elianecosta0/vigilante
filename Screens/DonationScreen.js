@@ -24,50 +24,23 @@ const donations = [
     donors: "845 donors",
     image: require('../assets/photo3.jpg'),
   },
-  {
-    id: 3,
-    title: "Youth Empowerment Program",
-    description: "Support after-school programs for at-risk youth",
-    progress: 0.82,
-    target: "$25,000",
-    raised: "$20,500",
-    donors: "2.1K donors",
-    image: require('../assets/photo3.jpg'),
-  },
 ];
 
 const DonationScreen = ({ navigation }) => {
   return (
     <ScrollView style={styles.container}>
-      {/* Header with Drawer Icon */}
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}>
           <Ionicons name="menu" size={28} color="#333" />
         </TouchableOpacity>
         <Text style={styles.title}>Donations</Text>
-        <View style={{ width: 28 }} /> {/* Spacer */}
-      </View>
-
-      {/* Banner Image with Overlay */}
-      <View style={styles.bannerContainer}>
-        <Image source={require('../assets/photo2.jpg')} style={styles.bannerImage} resizeMode="cover" />
-        <View style={styles.bannerOverlay} />
-        <View style={styles.bannerTextContainer}>
-          <Text style={styles.bannerTitle}>Support Survivors</Text>
-          <Text style={styles.bannerSubtitle}>Re-unite Families</Text>
-        </View>
-      </View>
-
-      {/* See All Button */}
-      <View style={styles.seeAllContainer}>
-        <TouchableOpacity onPress={() => navigation.navigate('SeeAll')}>
-          <Text style={styles.seeAllText}>See All</Text>
-        </TouchableOpacity>
+        <View style={{ width: 28 }} />
       </View>
 
       {/* Donation List */}
       <View style={styles.donationList}>
-        {donations.map((item) => (
+        {donations.map(item => (
           <TouchableOpacity
             key={item.id.toString()}
             style={styles.donationCard}
@@ -115,38 +88,6 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   title: { fontSize: 22, fontWeight: 'bold', color: '#333' },
-  bannerContainer: {
-    width: '100%',
-    height: 180,
-    position: 'relative',
-    borderRadius: 10,
-    overflow: 'hidden',
-    marginBottom: 10,
-  },
-  bannerImage: { width: '100%', height: '100%' },
-  bannerOverlay: {
-    position: 'absolute',
-    top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-  },
-  bannerTextContainer: {
-    position: 'absolute',
-    bottom: 20,
-    left: 20,
-  },
-  bannerTitle: { color: '#fff', fontSize: 24, fontWeight: 'bold' },
-  bannerSubtitle: { color: '#fff', fontSize: 16, marginTop: 5 },
-  seeAllContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    paddingHorizontal: 16,
-    marginBottom: 10,
-  },
-  seeAllText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#FF6B6B',
-  },
   donationList: { paddingHorizontal: 16, paddingBottom: 20 },
   donationCard: {
     borderRadius: 12,
@@ -185,4 +126,3 @@ const styles = StyleSheet.create({
 });
 
 export default DonationScreen;
-
