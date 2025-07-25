@@ -15,8 +15,8 @@ const CustomDrawerContent = ({ navigation }) => {
       </View>
 
       {/* Menu items */}
-      <MenuItem icon="home-outline" label="Home" onPress={() => navigation.navigate('Home')} />
-      <MenuItem icon="shield-checkmark-outline" label="Self Defense Course" onPress={() => navigation.navigate('Self Defense Course')} />
+      <MenuItem icon="home-outline" label="Home" onPress={() => navigation.navigate('MainApp')} />
+      <MenuItem icon="shield-checkmark-outline" label="Self Defense Course" onPress={() => navigation.navigate('SelfDefense')} />
       <MenuItem icon="card-outline" label="Donations" onPress={() => navigation.navigate('Donations')}/>
       <MenuItem icon="shirt-outline" label="Merchandise" onPress={() => navigation.navigate('Merchandise')} />
       <MenuItem icon="settings-outline" label="Settings" onPress={() => navigation.navigate('Settings')} />

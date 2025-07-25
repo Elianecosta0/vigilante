@@ -18,7 +18,7 @@ const MenuScreen = ({ navigation }) => {
 
       {/* Menu Items */}
       <MenuItem label="Home" icon="home-outline" onPress={() => handlePress('HomeScreen')} />
-      <MenuItem label="Self defense course" icon="shield-checkmark-outline" onPress={() => {}} />
+      <MenuItem label="Self defense course" icon="shield-checkmark-outline" onPress={() => handlePress('SelfDefence')} />
       <MenuItem label="Donations" icon="card-outline" onPress={() => {}} />
       <MenuItem label="Merchandise" icon="shirt-outline" onPress={() => {}} />
       <MenuItem label="Settings" icon="settings-outline" onPress={() => handlePress('Settings')} />

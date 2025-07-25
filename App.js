@@ -12,6 +12,7 @@ import SignUp from './Screens/SignUp';
 import ForgotPassword from './Screens/ForgotPassword';
 import MoreInformation1 from './Screens/MoreInformation1';
 
+
 import HomeScreen from './Screens/HomeScreen';
 import CommunityScreen from './Screens/CommunityScreen';
 import EmergencyScreen from './Screens/EmergencyScreen';
@@ -56,8 +57,9 @@ function DrawerNavigator() {
       screenOptions={{ headerShown: false, drawerType: 'front' }}
       drawerContent={(props) => <CustomDrawerContent {...props} />}
     >
-      <Drawer.Screen name="MainTabs" component={MainTabs} />
-      <Drawer.Screen name="Self Defense" component={SelfDefenseScreen} />
+      <Drawer.Screen name="MainTabs" component={BottomTabs} />
+     
+      <Drawer.Screen name="SelfDefense" component={SelfDefenseScreen} />
 
       <Drawer.Screen name="Donations" component={DonationScreen} />
       <Drawer.Screen name="Merchandise" component={MerchandiseScreen} />
@@ -78,12 +80,13 @@ export default function App() {
         <Stack.Screen name="SignUp" component={SignUp} />
         <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
         <Stack.Screen name="MoreInformation1" component={MoreInformation1} />
-        <Stack.Screen name="MoreInformation2" component={MoreInformation2} />
+     
         <Stack.Screen name="MyDetails" component={MyDetails} />
         <Stack.Screen name="SeeAll" component={SeeAll} />
         <Stack.Screen name="Chatbot" component={ChatbotScreen} />
         <Stack.Screen name="DonationDetails" component={DonationDetails} />
         <Stack.Screen name="MainApp" component={DrawerNavigator} />
+            <Stack.Screen name="Home" component={HomeScreen} />
 
       </Stack.Navigator>
     </NavigationContainer>
