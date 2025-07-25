@@ -58,11 +58,11 @@ const DonationScreen = ({ navigation }) => {
         </View>
       </View>
 
-      {/* ✅ See All Button */}
+      {/* See All Button */}
       <View style={styles.seeAllContainer}>
-       <TouchableOpacity onPress={() => navigation.navigate('SeeAll')}>
-  <Text style={styles.seeAllText}>See All</Text>
-</TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('SeeAll')}>
+          <Text style={styles.seeAllText}>See All</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Donation List */}
@@ -115,7 +115,6 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   title: { fontSize: 22, fontWeight: 'bold', color: '#333' },
-
   bannerContainer: {
     width: '100%',
     height: 180,
@@ -137,7 +136,6 @@ const styles = StyleSheet.create({
   },
   bannerTitle: { color: '#fff', fontSize: 24, fontWeight: 'bold' },
   bannerSubtitle: { color: '#fff', fontSize: 16, marginTop: 5 },
-
   seeAllContainer: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
@@ -149,7 +147,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FF6B6B',
   },
-
   donationList: { paddingHorizontal: 16, paddingBottom: 20 },
   donationCard: {
     borderRadius: 12,
@@ -166,7 +163,6 @@ const styles = StyleSheet.create({
   donationContent: { padding: 16 },
   donationTitle: { fontSize: 18, fontWeight: 'bold', color: '#333', marginBottom: 8 },
   donationDescription: { fontSize: 14, color: '#666', marginBottom: 16, lineHeight: 20 },
-
   progressContainer: { marginBottom: 16 },
   progressBar: {
     height: 6,
@@ -177,7 +173,6 @@ const styles = StyleSheet.create({
   progressFill: { height: 6, backgroundColor: '#FF6B6B', borderRadius: 3 },
   progressTextContainer: { flexDirection: 'row', justifyContent: 'space-between' },
   progressText: { fontSize: 12, color: '#666' },
-
   donationFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   donorCount: { fontSize: 13, color: '#999' },
   donateButton: {
@@ -190,3 +185,4 @@ const styles = StyleSheet.create({
 });
 
 export default DonationScreen;
+

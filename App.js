@@ -3,7 +3,6 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createDrawerNavigator } from '@react-navigation/drawer';
-
 import { Ionicons } from '@expo/vector-icons';
 
 // Screens
@@ -28,11 +27,13 @@ import SelfDefenseScreen from './Screens/SelfDefenceScreen';
 import CustomDrawerContent from './components/CustomDrawerContent';
 import CustomTabBar from './components/CustomerTabBar';
 import SeeAll from './Screens/SeeAll';
+import ChatbotScreen from './Screens/ChatbotScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 const Drawer = createDrawerNavigator();
 
+// Bottom Tab Navigator
 function MainTabs() {
   return (
     <Tab.Navigator
@@ -48,6 +49,7 @@ function MainTabs() {
   );
 }
 
+// Drawer Navigator
 function DrawerNavigator() {
   return (
     <Drawer.Navigator
@@ -63,6 +65,7 @@ function DrawerNavigator() {
   );
 }
 
+// App Entry
 export default function App() {
   return (
     <NavigationContainer>
@@ -75,13 +78,9 @@ export default function App() {
         <Stack.Screen name="MoreInformation1" component={MoreInformation1} />
         <Stack.Screen name="MoreInformation2" component={MoreInformation2} />
         <Stack.Screen name="MyDetails" component={MyDetails} />
-        <Stack.Screen name="SeeAll" component={SeeAll} options={{ headerShown: false }} />
-
-        {/* Donation Screens */}
-        <Stack.Screen name="Donations" component={DonationScreen} />
+        <Stack.Screen name="SeeAll" component={SeeAll} />
+        <Stack.Screen name="Chatbot" component={ChatbotScreen} />
         <Stack.Screen name="DonationDetails" component={DonationDetails} />
-
-        {/* Main App */}
         <Stack.Screen name="MainApp" component={DrawerNavigator} />
       </Stack.Navigator>
     </NavigationContainer>

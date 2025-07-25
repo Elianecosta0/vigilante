@@ -47,39 +47,36 @@ const SelfDefenceScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      {/* Title */}
       <Text style={styles.headerTitle}>Self-Defense Courses</Text>
 
+      {/* Drawer and Search */}
       <View style={styles.searchContainer}>
-  <TouchableOpacity 
-    onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
-    style={styles.menuButtonInside}
-  >
-    <Ionicons name="menu" size={26} color="#333" />
-  </TouchableOpacity>
+        <TouchableOpacity 
+          onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
+          style={styles.menuButtonInside}
+        >
+          <Ionicons name="menu" size={26} color="#333" />
+        </TouchableOpacity>
 
-  <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
-  <TextInput 
-    placeholder="Search courses..." 
-    placeholderTextColor="#999"
-    style={styles.searchInput}
-  />
-</View>
+        <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
+        <TextInput 
+          placeholder="Search courses..." 
+          placeholderTextColor="#999"
+          style={styles.searchInput}
+        />
+      </View>
 
-      {/* Course List */}
+      {/* Courses List */}
       <FlatList
         data={videos}
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={styles.listContainer}
         renderItem={({ item }) => (
           <View style={styles.courseCard}>
-            {/* Thumbnail */}
             <View style={styles.thumbnailContainer}>
               <Image source={item.image} style={styles.courseImage} />
               <Text style={styles.durationBadge}>{item.duration}</Text>
             </View>
-            
-            {/* Course Info */}
             <View style={styles.courseInfo}>
               <View style={styles.avatar}>
                 <Ionicons name="person-circle" size={36} color="#999" />
@@ -93,8 +90,6 @@ const SelfDefenceScreen = ({ navigation }) => {
                 <Ionicons name="ellipsis-vertical" size={20} color="#666" />
               </TouchableOpacity>
             </View>
-
-            {/* Subscribe Button */}
             <TouchableOpacity 
               style={[
                 styles.subscribeButton,
@@ -125,27 +120,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 12,
   },
- searchContainer: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  backgroundColor: '#F5F5F5',
-  borderRadius: 12,
-  paddingHorizontal: 16,
-  marginHorizontal: 16,
-  marginBottom: 16,
-  height: 48,
-},
-menuButtonInside: {
-  marginRight: 10,
-},
-searchIcon: {
-  marginRight: 10,
-},
-searchInput: {
-  flex: 1,
-  fontSize: 16,
-  color: '#333',
-},
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    height: 48,
+  },
+  menuButtonInside: { marginRight: 10 },
+  searchIcon: { marginRight: 10 },
+  searchInput: { flex: 1, fontSize: 16, color: '#333' },
   listContainer: { paddingHorizontal: 16, paddingBottom: 20 },
   courseCard: { marginBottom: 24 },
   thumbnailContainer: { position: 'relative', marginBottom: 12 },
@@ -181,3 +168,4 @@ searchInput: {
 });
 
 export default SelfDefenceScreen;
+
