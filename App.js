@@ -21,6 +21,7 @@ import MyDetails from './Screens/MyDetails';
 
 import DonationScreen from './Screens/DonationScreen';
 import MerchandiseScreen from './Screens/MerchandiseScreen';
+import ProductScreen from './Screens/ProductsScreen';
 import SettingsScreen from './Screens/SettingsScreen';
 
 import SelfDefenseScreen from './Screens/SelfDefenceScreen';
@@ -84,6 +85,8 @@ export default function App() {
         <Stack.Screen name="MoreInformation1" component={MoreInformation1} options={{ headerShown: false }} />
         <Stack.Screen name="MoreInformation2" component={MoreInformation2} options={{ headerShown: false }} />
         <Stack.Screen name="MyDetails" component={MyDetails} options={{ headerShown: false }} />
+        <Stack.Screen name="Product" component={ProductScreen} options={{ headerShown: false }} />
+
 
         
         {/* 👇 Replaces MainTabs with DrawerNavigator */}

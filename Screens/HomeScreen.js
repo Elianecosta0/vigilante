@@ -18,7 +18,7 @@ const HomeScreen = () => {
 
       {/* Main content */}
       <View style={styles.content}>
-        <Text>Welcome to the Home Screen!</Text>
+        <Text></Text>
       </View>
     </View>
   );
