@@ -1,11 +1,71 @@
-import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useState } from 'react';
+import {
+  View,
+  TextInput,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  ScrollView,
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import { db } from '../config'; // your firebase setup
 
-export default function MoreInformation1({ navigation }) {
+export default function MoreInformation1({ route }) {
+  const { uid, username, email } = route.params;
+  const navigation = useNavigation();
+
+  // Individual state variables for better controlled inputs (matching your style snippet)
+  const [fullName, setFullName] = useState('');
+  const [dateOfBirth, setDob] = useState('');
+  const [gender, setGender] = useState('');
+  const [height, setHeight] = useState('');
+  const [weight, setWeight] = useState('');
+  const [feature, setFeature] = useState('');
+  const [emergencyContact, setEmergencyContact] = useState('');
+  const [yourNumber, setYourNumber] = useState('');
+
+  const onSubmit = async () => {
+    if (
+      !fullName ||
+      !dateOfBirth ||
+      !gender ||
+      !height ||
+      !weight ||
+      !feature ||
+      !emergencyContact ||
+      !yourNumber
+    ) {
+      Alert.alert('Validation Error', 'Please fill out all fields.');
+      return;
+    }
+
+    try {
+      await db.collection('users').doc(uid).set({
+        uid,
+        username,
+        email,
+        name: fullName,
+        dob: dateOfBirth,
+        gender,
+        height,
+        weight,
+        identifyingFeature: feature,
+        emergencyContact,
+        phone: yourNumber,
+      });
+
+      Alert.alert('Success', 'Your information has been saved.');
+      navigation.navigate('MainApp'); // Adjust your navigation target accordingly
+    } catch (error) {
+      console.error('Error saving user info:', error);
+      Alert.alert('Error', 'Failed to save information. Please try again.');
+    }
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
-
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
         <Ionicons name="chevron-back" size={25} color="#1E2C3A" />
       </TouchableOpacity>
@@ -17,27 +77,57 @@ export default function MoreInformation1({ navigation }) {
 
       <View style={styles.inputGroup}>
         <Text style={styles.label}>Full Name:</Text>
-        <TextInput style={styles.input} placeholder="Enter your full name" placeholderTextColor="#8391A1" />
+        <TextInput
+          style={styles.input}
+          placeholder="Enter your full name"
+          placeholderTextColor="#8391A1"
+          value={fullName}
+          onChangeText={setFullName}
+        />
       </View>
 
       <View style={styles.inputGroup}>
         <Text style={styles.label}>Date of Birth:</Text>
-        <TextInput style={styles.input} placeholder="DD/MM/YYYY" placeholderTextColor="#8391A1" />
+        <TextInput
+          style={styles.input}
+          placeholder="DD/MM/YYYY"
+          placeholderTextColor="#8391A1"
+          value={dateOfBirth}
+          onChangeText={setDob}
+        />
       </View>
 
       <View style={styles.inputGroup}>
         <Text style={styles.label}>Gender:</Text>
-        <TextInput style={styles.input} placeholder="e.g. Female / Male / Other" placeholderTextColor="#8391A1" />
+        <TextInput
+          style={styles.input}
+          placeholder="e.g. Female / Male / Other"
+          placeholderTextColor="#8391A1"
+          value={gender}
+          onChangeText={setGender}
+        />
       </View>
 
       <View style={styles.inputGroup}>
         <Text style={styles.label}>Height:</Text>
-        <TextInput style={styles.input} placeholder="e.g. 5'7 or 170cm" placeholderTextColor="#8391A1" />
+        <TextInput
+          style={styles.input}
+          placeholder="e.g. 5'7 or 170cm"
+          placeholderTextColor="#8391A1"
+          value={height}
+          onChangeText={setHeight}
+        />
       </View>
 
       <View style={styles.inputGroup}>
         <Text style={styles.label}>Weight:</Text>
-        <TextInput style={styles.input} placeholder="e.g. 70kg" placeholderTextColor="#8391A1" />
+        <TextInput
+          style={styles.input}
+          placeholder="e.g. 70kg"
+          placeholderTextColor="#8391A1"
+          value={weight}
+          onChangeText={setWeight}
+        />
       </View>
 
       <View style={styles.inputGroup}>
@@ -46,11 +136,37 @@ export default function MoreInformation1({ navigation }) {
           style={styles.input}
           placeholder="e.g. birthmark on neck"
           placeholderTextColor="#8391A1"
+          value={feature}
+          onChangeText={setFeature}
         />
       </View>
 
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('MoreInformation2')}>
-        <Text style={styles.buttonText}>Next</Text>
+      <View style={styles.inputGroup}>
+        <Text style={styles.label}>Emergency Contact:</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Phone number"
+          placeholderTextColor="#8391A1"
+          value={emergencyContact}
+          onChangeText={setEmergencyContact}
+          keyboardType="phone-pad"
+        />
+      </View>
+
+      <View style={styles.inputGroup}>
+        <Text style={styles.label}>Your Phone Number:</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Phone number"
+          placeholderTextColor="#8391A1"
+          value={yourNumber}
+          onChangeText={setYourNumber}
+          keyboardType="phone-pad"
+        />
+      </View>
+
+      <TouchableOpacity style={styles.button} onPress={onSubmit}>
+        <Text style={styles.buttonText}>Complete Signup</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -96,7 +212,7 @@ const styles = StyleSheet.create({
   },
   inputGroup: {
     marginBottom: 15,
-    paddingVertical: -3, 
+    paddingVertical: -3,
   },
   label: {
     fontSize: 14,
@@ -131,3 +247,4 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+
