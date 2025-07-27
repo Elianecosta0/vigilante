@@ -11,6 +11,10 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons, AntDesign } from '@expo/vector-icons';
+import { CartContext } from '../components/CartContext'; 
+import { useContext } from 'react';
+import Toast from 'react-native-root-toast';
+
 
 const { width } = Dimensions.get('window');
 
@@ -35,21 +39,41 @@ export default function ProductScreen({ route, navigation }) {
     setUserRating(0);
   };
 
+  const { addToCart } = useContext(CartContext);
+
+  const handleAddToCart = () => {
+    const productToAdd = {
+      ...product,
+      size: selectedSize,
+      quantity: 1,
+    };
+
+    addToCart(productToAdd);
+
+    Toast.show(`${product.name} added to cart`, {
+      duration: Toast.durations.SHORT,
+      position: Toast.positions.CENTER,
+      backgroundColor: '#567c8d',
+      textColor: '#000',
+      shadow: true,
+      animation: true,
+      hideOnPress: true,
+      delay: 0,
+    });
+  };
+
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
         <Ionicons name="chevron-back" size={24} color="#000" />
       </TouchableOpacity>
 
-      {/* Product Image */}
       <Image source={product.image} style={styles.image} resizeMode="contain" />
 
       <ScrollView contentContainerStyle={styles.content}>
-        {/* Brand and Title */}
         <Text style={styles.brand}>Vigilante</Text>
         <Text style={styles.name}>{product.name}</Text>
 
-        {/* Rating */}
         <View style={styles.ratingRow}>
           <AntDesign name="star" size={16} color="#FFD700" />
           <AntDesign name="star" size={16} color="#FFD700" />
@@ -59,16 +83,13 @@ export default function ProductScreen({ route, navigation }) {
           <Text style={styles.ratingText}>({product.rating})</Text>
         </View>
 
-        {/* Price */}
         <Text style={styles.price}>R{product.price}</Text>
 
-        {/* Description */}
         <Text style={styles.sectionTitle}>Description</Text>
         <Text style={styles.description}>
-          Lightweight shoes with responsive cushioning. Perfect for performance and daily comfort. Designed with purpose — part of proceeds go to a cause.
+          This is the Discription of the Product It is like this for now so i will Change it later.
         </Text>
 
-        {/* Size Selector */}
         <Text style={styles.sectionTitle}>Size</Text>
         <View style={styles.sizeContainer}>
           {sizes.map((size) => (
@@ -92,7 +113,6 @@ export default function ProductScreen({ route, navigation }) {
           ))}
         </View>
 
-        {/* Review Input */}
         <Text style={styles.sectionTitle}>Leave a Review</Text>
 
         <View style={styles.ratingRow}>
@@ -106,7 +126,7 @@ export default function ProductScreen({ route, navigation }) {
               />
             </TouchableOpacity>
           ))}
-        </View>a
+        </View>
 
           <TextInput
           placeholder="Write your review..."
@@ -120,7 +140,6 @@ export default function ProductScreen({ route, navigation }) {
           <Text style={styles.submitReviewText}>Submit Review</Text>
         </TouchableOpacity>
 
-        {/* Display Reviews */}
         {reviews.length > 0 && (
           <>
             <Text style={styles.sectionTitle}>Reviews</Text>
@@ -138,9 +157,8 @@ export default function ProductScreen({ route, navigation }) {
         )}
       </ScrollView>
 
-      {/* Add to Cart Button */}
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.addToCart}>
+        <TouchableOpacity style={styles.addToCart} onPress={handleAddToCart}>
           <Text style={styles.addToCartText}>Add to Cart</Text>
         </TouchableOpacity>
       </View>

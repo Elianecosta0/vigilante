@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  FlatList,
-  TextInput,
-  Image,
-  Dimensions,
-} from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, Image, StyleSheet, TextInput, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { useCart } from '../components/CartContext'; 
 
-const categories = ['All', 'Defence', 'Tech', 'Merch', 'Style'];
+const screenWidth = Dimensions.get('window').width;
+
+export default function MerchandiseScreen() {
+  const navigation = useNavigation();
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [searchActive, setSearchActive] = useState(false);
+  const { addToCart, cartItems } = useCart();
+  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
+  const categories = ['All', 'Defence', 'Tech', 'Merch', 'Style'];
 
 const products = [
   { id: '1', brand: 'Vigilante', name: 'Safety keychain', category: 'Defence', price: 129.99, rating: 4.3, image: require('../assets/SafetyKeychain.webp') },
@@ -37,33 +38,29 @@ const products = [
   { id: '20', brand: 'Vigilante', name: 'Shock-proof case', category: 'Merch', price: 179.99, rating: 4.7, image: require('../assets/ShockProofCaase.webp') },
 ];
 
-const screenWidth = Dimensions.get('window').width;
-
-export default function MerchandiseScreen() {
-  const navigation = useNavigation();
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [searchActive, setSearchActive] = useState(false);
-
-  const filteredProducts = products.filter((product) => {
-    if (selectedCategory === 'All') return true;
-    return product.category === selectedCategory;
-  });
-
-  const renderItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.itemCard}
-      onPress={() => navigation.navigate('Product', { product: item })}
-    >
-      <Image source={item.image} style={styles.itemImage} resizeMode="contain" />
-      <Text style={styles.itemBrand}>{item.brand}</Text>
-      <Text style={styles.itemName}>{item.name}</Text>
-      <View style={styles.itemFooter}>
-        <Text style={styles.itemPrice}>R{item.price}</Text>
-        <Ionicons name="add-circle" size={24} color="#000" />
-      </View>
-    </TouchableOpacity>
+  const filteredProducts = products.filter((product) =>
+    selectedCategory === 'All' ? true : product.category === selectedCategory
   );
 
+  const renderItem = ({ item }) => (
+    <TouchableOpacity style={styles.itemCard}>
+      <TouchableOpacity
+        style={{ flex: 1 }}
+        onPress={() => navigation.navigate('Product', { product: item })}
+        activeOpacity={1}
+      >
+        <Image source={item.image} style={styles.itemImage} resizeMode="contain" />
+        <Text style={styles.itemBrand}>{item.brand}</Text>
+        <Text style={styles.itemName}>{item.name}</Text>
+        <View style={styles.itemFooter}>
+          <Text style={styles.itemPrice}>R{item.price}</Text>
+          <TouchableOpacity onPress={() => addToCart(item)}>
+            <Ionicons name="add-circle" size={24} color="#000" />
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    </TouchableOpacity>
+  );
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -72,7 +69,18 @@ export default function MerchandiseScreen() {
             <Ionicons name="menu" size={30} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.title1}>Merchandise</Text>
-          <Ionicons name="cart" size={22} color="#fff" />
+
+          <TouchableOpacity onPress={() => navigation.navigate('CartScreen')}>
+            <View>
+              <Ionicons name="cart" size={24} color="#fff" />
+              {cartCount > 0 && (
+                <View style={styles.cartBadge}>
+                  <Text style={styles.cartBadgeText}>{cartCount}</Text>
+                </View>
+              )}
+            </View>
+          </TouchableOpacity>
+
         </View>
 
         <View style={styles.searchWrapper}>
