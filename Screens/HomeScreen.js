@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator, ImageBackground, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator, ImageBackground, TextInput, Dimensions } from 'react-native';
 import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { firebase } from '../config'; // Make sure this points to your Firebase setup
 import { getAuth } from 'firebase/auth';
+
+const screenWidth = Dimensions.get('window').width;
 
   const HomeScreen = () => {
   const [posters, setPosters] = useState([]);
@@ -12,6 +14,7 @@ import { getAuth } from 'firebase/auth';
   const [userName, setUserName] = useState('');
   const auth = getAuth();
   const [searchQuery, setSearchQuery] = useState('');
+   const [searchActive, setSearchActive] = useState(false);
 const [filteredPosters, setFilteredPosters] = useState([]);
 
 
@@ -78,21 +81,46 @@ const [filteredPosters, setFilteredPosters] = useState([]);
     <ScrollView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.greeting}>Welcome, {userName}</Text>
-        <Text style={styles.subtitle}>You are not alone. We're here to help.</Text>
-      </View>
+              <View style={styles.headerTopRow}>
+          
+          <TouchableOpacity onPress={() => navigation.openDrawer()}>
+            <Ionicons name="menu" size={30} color="#fff" />
+          </TouchableOpacity>
 
+        
 
-      <View style={styles.searchContainer}>
-  <Ionicons name="search" size={20} color="#ccc" style={{ marginLeft: 10 }} />
+          
+        </View>
+         <Text style={styles.greeting}>Welcome, {userName || 'Guest'}</Text>
+      <Text style={styles.subtitle}>You are not alone. We're here to help.</Text>
+  
+        <View style={styles.searchWrapper}>
+                  {searchActive ? (
+         <View style={styles.searchContainer}>
+  <Ionicons name="search" size={20} color="#999" style={{ marginLeft: 10 }} />
   <TextInput
     style={styles.searchInput}
     placeholder="Search missing persons..."
     placeholderTextColor="#999"
     value={searchQuery}
     onChangeText={setSearchQuery}
+     autoFocus
+    onBlur={() => setSearchActive(false)}
   />
+   </View>
+            ) : (
+              <TouchableOpacity onPress={() => setSearchActive(true)}>
+                <Ionicons name="search" size={24} color="#fff" />
+              </TouchableOpacity>
+            )}
 </View>
+        
+
+     
+    </View>
+
+
+     
 
 
       {/* Quick Access Buttons */}
@@ -196,29 +224,50 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'white',
-    paddingHorizontal: 20,
-    paddingTop: 50,
+    paddingHorizontal: 5,
+    paddingTop: 0,
   },
-  header: {
-    marginBottom: 20,
+    header: {
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    backgroundColor: '#2f4156',
+    borderBottomLeftRadius: 55,
+    borderBottomRightRadius: 55,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+    headerTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+
+    searchWrapper: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 20,
   },
 
   searchContainer: {
   flexDirection: 'row',
-  alignItems: 'center',
-  backgroundColor: '#1B263B',
-  borderRadius: 12,
-  marginBottom: 20,
-  height: 40,
+    backgroundColor: '#f1f1f1',
+    borderRadius: 30,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    height: 40,
+    width: 220,
 },
-searchInput: {
-  flex: 1,
-  color: '#fff',
-  paddingHorizontal: 10,
-  fontSize: 16,
-},
+ searchInput: {
+    marginLeft: 8,
+    flex: 1,
+    fontSize: 14,
+  },
   greeting: {
-    color: '#1B263B',
+    color: '#fff',
     fontSize: 22,
     fontWeight: 'bold',
   },
@@ -237,6 +286,7 @@ searchInput: {
     width: '47%',
     borderRadius: 12,
     marginBottom: 15,
+    marginTop: 20,
     overflow: 'hidden',  // important for border radius to work on Android
   },
   imageBackground: {
@@ -245,14 +295,14 @@ searchInput: {
     justifyContent: 'center',
   },
   cardText: {
-    color: '#1B263B',
+    color: '#2f4156',
     marginTop: 8,
     fontWeight: '600',
     fontSize: 16,
   },
 
   sectionTitle: {
-    color: '#1B263B',
+    color: '#2f4156',
     fontSize: 18,
     fontWeight: '600',
     marginBottom: 10,
@@ -261,7 +311,7 @@ searchInput: {
     marginBottom: 30,
   },
   categoryCard: {
-    backgroundColor: '#1B263B',
+    backgroundColor: '#2f4156',
     borderRadius: 10,
     padding: 15,
     alignItems: 'center',
@@ -275,7 +325,7 @@ searchInput: {
     textAlign: 'center',
   },
   feedCard: {
-    backgroundColor: '#1B263B',
+    backgroundColor: '#2f4156',
     borderRadius: 12,
     flexDirection: 'row',
     padding: 12,
