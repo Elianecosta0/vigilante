@@ -1,10 +1,9 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {
   View,
   TouchableOpacity,
   StyleSheet,
   Dimensions,
-  Platform,
   Text,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
@@ -12,29 +11,28 @@ import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 
-const CustomTabBar = ({ state, descriptors, navigation }) => {
+const CustomTabBar = ({ state, descriptors, navigation, hasUnreadNotifications }) => {
   const tabWidth = width / state.routes.length;
-
   const activeIndex = state.index;
   const curveCenter = tabWidth * activeIndex + tabWidth / 2;
 
   const getPath = () => {
-    const height = 80; 
+    const height = 80;
     const curveRadius = 40;
-    const curveWidth = 70;  
+    const curveWidth = 70;
     const curveDepth = 35;
 
     return `
-    M0 0
-    H${curveCenter - curveWidth / 1}
-    C${curveCenter - curveWidth / 2} 0, ${curveCenter - curveRadius} ${curveDepth}, ${curveCenter} ${curveDepth}
-    C${curveCenter + curveRadius} ${curveDepth}, ${curveCenter + curveWidth / 2} 0, ${curveCenter + curveWidth / 1} 0
-    H${width}
-    V${height}
-    H0
-    Z
-  `;
-};
+      M0 0
+      H${curveCenter - curveWidth / 1}
+      C${curveCenter - curveWidth / 2} 0, ${curveCenter - curveRadius} ${curveDepth}, ${curveCenter} ${curveDepth}
+      C${curveCenter + curveRadius} ${curveDepth}, ${curveCenter + curveWidth / 2} 0, ${curveCenter + curveWidth / 1} 0
+      H${width}
+      V${height}
+      H0
+      Z
+    `;
+  };
 
   return (
     <View style={styles.container}>
@@ -83,8 +81,21 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
               <Ionicons
                 name={iconName}
                 size={26}
-                color={isFocused ? '#fff' : '#fff'}
+                color="#fff"
               />
+                  {route.name === 'Notifications' && hasUnreadNotifications && (
+              <View
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  right: -4,
+                  width: 10,
+                  height: 10,
+                  borderRadius: 5,
+                  backgroundColor: 'red',
+                }}
+              />
+            )}
             </View>
           </TouchableOpacity>
         );
@@ -117,6 +128,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
+    position: 'relative',
   },
   activeIcon: {
     backgroundColor: '#567C8D',
@@ -126,6 +138,17 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
   },
+  badge: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: 'red',
+  },
 });
 
 export default CustomTabBar;
+
+
