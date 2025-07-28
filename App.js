@@ -25,6 +25,7 @@ import MyDetails from './Screens/MyDetails';
 import DonationScreen from './Screens/DonationScreen';
 import DonationDetails from './Screens/DonationDetail';
 import MerchandiseScreen from './Screens/MerchandiseScreen';
+import ProductScreen from './Screens/ProductsScreen';
 import SettingsScreen from './Screens/SettingsScreen';
 import SelfDefenseScreen from './Screens/SelfDefenceScreen';
 import ChatScreen from './Screens/ChatScreen';
@@ -99,11 +100,7 @@ function AppDrawer() {
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator
-        initialRouteName="Welcome"
-        screenOptions={{ headerShown: false }}
-      >
-        {/* Auth & Onboarding flow */}
+
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
         <Stack.Screen name="Onboarding" component={OnboardingScreen} />
         <Stack.Screen name="LogIn" component={LogIn} />
@@ -124,6 +121,7 @@ export default function App() {
         <Stack.Screen name="DonationDetails" component={DonationDetails} />
          <Stack.Screen name="MissingPersonDetails" component={MissingPersonDetails} />
         <Stack.Screen name="ChatScreen" component={ChatScreen} />
+           <Stack.Screen name="Product" component={ProductScreen} options={{ headerShown: false }} />
 
 
       </Stack.Navigator>

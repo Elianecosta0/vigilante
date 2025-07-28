@@ -82,6 +82,7 @@ const [filteredPosters, setFilteredPosters] = useState([]);
         <Text style={styles.subtitle}>You are not alone. We're here to help.</Text>
       </View>
 
+
       <View style={styles.searchContainer}>
   <Ionicons name="search" size={20} color="#ccc" style={{ marginLeft: 10 }} />
   <TextInput
@@ -120,6 +121,7 @@ const [filteredPosters, setFilteredPosters] = useState([]);
           <Ionicons name="person-add" size={28} color="#1B263B" />
           <Text style={styles.cardText}>Add Contact</Text>
         </TouchableOpacity>
+
       </View>
 
       {/* Support Categories */}
