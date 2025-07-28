@@ -148,7 +148,7 @@ const ProfileScreen = () => {
           <Ionicons name="chevron-back-sharp" color="black" size={30} />
         </TouchableOpacity>
 
-        <Text style={styles.header}>Edit Profile</Text>
+        <Text style={styles.header}>Profile</Text>
 
         <View style={styles.profileSection}>
           <TouchableOpacity style={styles.profilePictureContainer} onPress={pickImage}>

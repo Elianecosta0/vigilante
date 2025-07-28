@@ -57,7 +57,7 @@ export default function MoreInformation1({ route }) {
       });
 
       Alert.alert('Success', 'Your information has been saved.');
-      navigation.navigate('MainApp'); // Adjust your navigation target accordingly
+      navigation.navigate('AppDrawer'); // Adjust your navigation target accordingly
     } catch (error) {
       console.error('Error saving user info:', error);
       Alert.alert('Error', 'Failed to save information. Please try again.');
