@@ -3,18 +3,21 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createDrawerNavigator } from '@react-navigation/drawer';
+import { CartProvider } from './components/CartContext';
+import { RootSiblingParent } from 'react-native-root-siblings';
 
-// Screens
 import WelcomeScreen from './Screens/WelcomeScreen';
 import OnboardingScreen from './Screens/OnboardingScreen';
 import AddPosterScreen from './Screens/AddPosterScreen';
 import LogIn from './Screens/LogIn';
 import SignUp from './Screens/SignUp';
 import ForgotPassword from './Screens/ForgotPassword';
+
 import MoreInformation1 from './Screens/MoreInformation1';
 import AddEmergencyContactScreen from './Screens/AddEmergContact';
 import ViewContactScreen from './Screens/ViewContactScreen';
 import MissingPersonDetails from './Screens/MissingPersonDetails';
+
 
 import HomeScreen from './Screens/HomeScreen';
 import CommunityScreen from './Screens/CommunityScreen';
@@ -28,7 +31,17 @@ import MerchandiseScreen from './Screens/MerchandiseScreen';
 import ProductScreen from './Screens/ProductsScreen';
 import SettingsScreen from './Screens/SettingsScreen';
 import SelfDefenseScreen from './Screens/SelfDefenceScreen';
+
+
+import TotalScreen from './Screens/TotalScreen';
+import CardDetails from './Screens/CardDetails';
+import ConfirmationScreen from './Screens/ConfirmationScreen';
+import ThankyouScreen from './Screens/ThankyouScreen';
+import CartScreen from './Screens/CartScreen';
+
+
 import ChatScreen from './Screens/ChatScreen';
+
 import CustomDrawerContent from './components/CustomDrawerContent';
 import CustomTabBar from './components/CustomerTabBar';
 import SeeAll from './Screens/SeeAll';
@@ -99,7 +112,12 @@ function AppDrawer() {
 // Stack Navigator handling auth flow and main app flow
 export default function App() {
   return (
+    <RootSiblingParent>
+    <CartProvider>
     <NavigationContainer>
+
+
+      <Stack.Navigator initialRouteName="Welcome">
 
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
         <Stack.Screen name="Onboarding" component={OnboardingScreen} />
@@ -122,9 +140,17 @@ export default function App() {
          <Stack.Screen name="MissingPersonDetails" component={MissingPersonDetails} />
         <Stack.Screen name="ChatScreen" component={ChatScreen} />
            <Stack.Screen name="Product" component={ProductScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="Product" component={ProductScreen} options={{ headerShown: false }} />
+
+        <Stack.Screen name="CartScreen" component={CartScreen}  options={{ headerShown: false }} />
+        <Stack.Screen name="CardDetails" component={CardDetails} options={{ headerShown: false }} />
+        <Stack.Screen name="ConfirmationScreen" component={ConfirmationScreen} options={{ headerShown: fals
+
 
 
       </Stack.Navigator>
     </NavigationContainer>
+    </CartProvider>
+    </RootSiblingParent>
   );
 }
