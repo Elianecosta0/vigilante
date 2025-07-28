@@ -46,7 +46,7 @@ const LogIn = () => {
 
     try {
       await firebase.auth().signInWithEmailAndPassword(email.trim(), password);
-      navigation.navigate('MainApp'); // ✅ make sure this route exists
+      navigation.navigate('AppDrawer'); // ✅ make sure this route exists
     } catch (error) {
       console.log('Login error:', error.code);
 
