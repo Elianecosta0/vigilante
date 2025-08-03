@@ -46,6 +46,9 @@ import CustomDrawerContent from './components/CustomDrawerContent';
 import CustomTabBar from './components/CustomerTabBar';
 import SeeAll from './Screens/SeeAll';
 import ChatbotScreen from './Screens/ChatbotScreen';
+import GroupChatScreen from './Screens/GroupChatScreen';
+import GroupDetailScreen from './Screens/GroupDetailScreen';
+
 import { firebase } from './config';
 import { useEffect, useState } from 'react';
 
@@ -117,7 +120,7 @@ export default function App() {
     <NavigationContainer>
 
 
-      <Stack.Navigator initialRouteName="Welcome">
+      <Stack.Navigator initialRouteName="Welcome"  screenOptions={{ headerShown: false }} >
 
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
         <Stack.Screen name="Onboarding" component={OnboardingScreen} />
@@ -140,11 +143,16 @@ export default function App() {
          <Stack.Screen name="MissingPersonDetails" component={MissingPersonDetails} />
         <Stack.Screen name="ChatScreen" component={ChatScreen} />
            <Stack.Screen name="Product" component={ProductScreen} options={{ headerShown: false }} />
-            <Stack.Screen name="Product" component={ProductScreen} options={{ headerShown: false }} />
+           
 
         <Stack.Screen name="CartScreen" component={CartScreen}  options={{ headerShown: false }} />
         <Stack.Screen name="CardDetails" component={CardDetails} options={{ headerShown: false }} />
-        <Stack.Screen name="ConfirmationScreen" component={ConfirmationScreen} options={{ headerShown: fals
+        <Stack.Screen name="ThankyouScreen" component={ThankyouScreen} options={{ headerShown: false }} />
+        
+
+        <Stack.Screen name="ConfirmationScreen" component={ConfirmationScreen} options={{ headerShown: false}}/>
+         <Stack.Screen name="GroupChat" component={GroupChatScreen} options={{ headerShown: false}}/>
+          <Stack.Screen name="GroupDetail" component={GroupDetailScreen} options={{ headerShown: false}}/>
 
 
 
