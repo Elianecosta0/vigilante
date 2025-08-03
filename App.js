@@ -28,6 +28,7 @@ import SelfDefenseScreen from './Screens/SelfDefenceScreen';
 import CustomDrawerContent from './components/CustomDrawerContent';
 import CustomTabBar from './components/CustomerTabBar';
 import SeeAll from './Screens/SeeAll';
+import EmergencyAlertStack from './Screens/EmergencyAlertStack';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -59,6 +60,8 @@ function DrawerNavigator() {
       <Drawer.Screen name="Donations" component={DonationScreen} />
       <Drawer.Screen name="Merchandise" component={MerchandiseScreen} />
       <Drawer.Screen name="Settings" component={SettingsScreen} />
+      <Drawer.Screen name="Emergency Alerts" component={EmergencyAlertStack} />
+
     </Drawer.Navigator>
   );
 }
