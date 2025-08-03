@@ -44,13 +44,15 @@ import ChatScreen from './Screens/ChatScreen';
 
 import CustomDrawerContent from './components/CustomDrawerContent';
 import CustomTabBar from './components/CustomerTabBar';
-import SeeAll from './Screens/SeeAll';
+
 import ChatbotScreen from './Screens/ChatbotScreen';
 import GroupChatScreen from './Screens/GroupChatScreen';
 import GroupDetailScreen from './Screens/GroupDetailScreen';
+import EmergencyAlertStack from './Screens/EmergencyAlertStack';
 
 import { firebase } from './config';
 import { useEffect, useState } from 'react';
+
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -108,6 +110,8 @@ function AppDrawer() {
       <Drawer.Screen name="Donations" component={DonationScreen} />
       <Drawer.Screen name="Merchandise" component={MerchandiseScreen} />
       <Drawer.Screen name="Settings" component={SettingsScreen} />
+      <Drawer.Screen name="Emergency Alerts" component={EmergencyAlertStack} />
+
     </Drawer.Navigator>
   );
 }

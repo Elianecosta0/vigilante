@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, FlatList, Image, StyleSheet, TextInput, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -136,11 +137,13 @@ const products = [
   );
 }
 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
   },
+
   header: {
     paddingTop: 60,
     paddingHorizontal: 20,
@@ -252,3 +255,4 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+
