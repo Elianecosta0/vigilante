@@ -8,26 +8,38 @@ import { Ionicons } from '@expo/vector-icons';
 const CustomDrawerContent = ({ navigation }) => {
   return (
     <DrawerContentScrollView contentContainerStyle={styles.container}>
-      {/* Profile header */}
-      <View style={styles.header}>
-        
-        <Text style={styles.username}>CtrlCommanders</Text>
+      {/* Logo Header */}
+      <View style={styles.logoContainer}>
+        <Image
+          source={require('../assets/vigilante-logo.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
       </View>
 
-      {/* Menu items */}
-      <MenuItem icon="home-outline" label="Home" onPress={() => navigation.navigate('Home')} />
-      <MenuItem icon="shield-checkmark-outline" label="Self Defense Course" onPress={() => navigation.navigate('Self Defense Course')} />
-      <MenuItem icon="card-outline" label="Donations" onPress={() => navigation.navigate('Donations')}/>
+      {/* Menu Items */}
+      <MenuItem
+        icon="home-outline"
+        label="Home"
+        onPress={() =>
+          navigation.navigate('AppDrawer', {
+            screen: 'Tabs',
+            params: { screen: 'Home' },
+          })
+        }
+      />
+      <MenuItem icon="shield-checkmark-outline" label="Self Defense Course" onPress={() => navigation.navigate('SelfDefense')} />
+      <MenuItem icon="card-outline" label="Donations" onPress={() => navigation.navigate('Donations')} />
       <MenuItem icon="shirt-outline" label="Merchandise" onPress={() => navigation.navigate('Merchandise')} />
+      <MenuItem icon="call" label="Emergency Contacts" onPress={() => navigation.navigate('ViewContact')} />
       <MenuItem icon="settings-outline" label="Settings" onPress={() => navigation.navigate('Settings')} />
-      <MenuItem icon="log-out-outline" label="Log Out" onPress={() => console.log('Logging out...')} />
     </DrawerContentScrollView>
   );
 };
 
 const MenuItem = ({ icon, label, onPress }) => (
   <TouchableOpacity style={styles.item} onPress={onPress}>
-    <Ionicons name={icon} size={22} color="#333" style={{ marginRight: 15 }} />
+    <Ionicons name={icon} size={22} color="#fff" style={{ marginRight: 15 }} />
     <Text style={styles.label}>{label}</Text>
   </TouchableOpacity>
 );
@@ -36,22 +48,17 @@ export default CustomDrawerContent;
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     paddingTop: 60,
-    backgroundColor: '#fff',
+    backgroundColor: '#1B263B',
   },
-  header: {
+  logoContainer: {
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 40,
   },
   logo: {
-    width: 80,
+    width: 150,
     height: 80,
-    resizeMode: 'contain',
-    marginBottom: 8,
-  },
-  username: {
-    fontSize: 16,
-    fontWeight: 'bold',
   },
   item: {
     flexDirection: 'row',
@@ -61,6 +68,6 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    color: '#333',
+    color: '#fff',
   },
 });
