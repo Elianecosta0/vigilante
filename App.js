@@ -48,7 +48,12 @@ import CustomTabBar from './components/CustomerTabBar';
 import ChatbotScreen from './Screens/ChatbotScreen';
 import GroupChatScreen from './Screens/GroupChatScreen';
 import GroupDetailScreen from './Screens/GroupDetailScreen';
-import EmergencyAlertStack from './Screens/EmergencyAlertStack';
+import SeeAll from './Screens/SeeAll';
+
+import AlertScreen from './Screens/AlertScreen';
+import ActiveAlertsScreen from './Screens/ActiveAlertsScreen';
+import LiveLocationScreen from './Screens/LiveLocationScreen';
+import RequestDetailsScreen from './Screens/RequestDetailsScreen';
 
 import { firebase } from './config';
 import { useEffect, useState } from 'react';
@@ -110,7 +115,7 @@ function AppDrawer() {
       <Drawer.Screen name="Donations" component={DonationScreen} />
       <Drawer.Screen name="Merchandise" component={MerchandiseScreen} />
       <Drawer.Screen name="Settings" component={SettingsScreen} />
-      <Drawer.Screen name="Emergency Alerts" component={EmergencyAlertStack} />
+      
 
     </Drawer.Navigator>
   );
@@ -158,6 +163,10 @@ export default function App() {
          <Stack.Screen name="GroupChat" component={GroupChatScreen} options={{ headerShown: false}}/>
           <Stack.Screen name="GroupDetail" component={GroupDetailScreen} options={{ headerShown: false}}/>
 
+          <Stack.Screen name="AlertScreen" component={AlertScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="ActiveAlertsScreen" component={ActiveAlertsScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="LiveLocationScreen" component={LiveLocationScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="RequestDetailsScreen" component={RequestDetailsScreen} options={{ headerShown: false }} />
 
 
       </Stack.Navigator>
