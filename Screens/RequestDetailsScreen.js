@@ -1,10 +1,30 @@
 import React from 'react';
 import { 
-  View, Text, StyleSheet, Image, TouchableOpacity, StatusBar, ScrollView 
+  View, Text, StyleSheet, Image, TouchableOpacity, StatusBar, ScrollView, Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const RequestDetailsScreen = ({ navigation }) => {
+const RequestDetailsScreen = ({ route, navigation }) => {
+  const { alertData } = route.params;
+
+  if (!alertData) {
+    Alert.alert('Alert not found', 'This alert does not exist.');
+    navigation.goBack();
+    return null;
+  }
+
+  const {
+    name,
+    phone,
+    emergencyContact,
+    identifyingFeature,
+    height,
+    weight,
+    location,
+    profileImageUrl,
+    notes,
+  } = alertData;
+
   return (
     <View style={styles.container}>
       <StatusBar backgroundColor="#001f3f" barStyle="light-content" />
@@ -21,29 +41,39 @@ const RequestDetailsScreen = ({ navigation }) => {
         {/* Profile Section */}
         <Image
           source={{
-            uri: 'https://thumbs.dreamstime.com/b/portrait-happy-female-generation-z-person-profile-picture-head-shot-beautiful-positive-young-woman-having-attractive-appearance-328069168.jpg',
+            uri: profileImageUrl || 'https://thumbs.dreamstime.com/b/portrait-happy-female-generation-z-person-profile-picture-head-shot-beautiful-positive-young-woman-having-attractive-appearance-328069168.jpg',
           }}
           style={styles.profileImage}
         />
-        <Text style={styles.name}>Nomvula Dlamini</Text>
+        <Text style={styles.name}>{name || 'No Name Provided'}</Text>
 
         {/* Emergency Contact */}
         <View style={styles.emergencySection}>
           <Text style={styles.emergencyLabel}>Emergency Contact</Text>
-          <Text style={styles.contactNumber}>+27 82 123 4567</Text>
-          <Text style={styles.contactNumber}>+27 83 987 6543</Text>
+          <Text style={styles.contactNumber}>{emergencyContact || 'Not Provided'}</Text>
         </View>
 
-        {/* Notes */}
+        {/* Notes / Identifying Features */}
         <View style={styles.notesSection}>
-          <Text style={styles.notesLabel}>Notes</Text>
+          <Text style={styles.notesLabel}>Notes / Identifying Features</Text>
           <Text style={styles.notesText}>
-            Priority response needed. Victim reports ongoing threat at residence.
+            {identifyingFeature || 'No notes available.'}
           </Text>
+          {height && <Text style={styles.notesText}>Height: {height}</Text>}
+          {weight && <Text style={styles.notesText}>Weight: {weight}</Text>}
         </View>
 
         {/* Action Button */}
-        <TouchableOpacity style={styles.respondButton}>
+        <TouchableOpacity
+          style={styles.respondButton}
+          onPress={() => {
+            if (location && location.latitude && location.longitude) {
+              navigation.navigate('LiveLocationScreen', { location, name });
+            } else {
+              Alert.alert('Location not available', 'Cannot open live location.');
+            }
+          }}
+        >
           <Text style={styles.buttonText}>RESPOND</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -128,3 +158,4 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
 });
+

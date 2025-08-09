@@ -15,6 +15,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 const LogIn = () => {
   const navigation = useNavigation();
 
+  const [role, setRole] = useState('');
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [secureEntry, setSecureEntry] = useState(true);
@@ -22,17 +24,22 @@ const LogIn = () => {
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
 
-  const handleSignup = () => {
-    navigation.navigate('SignUp');
-  };
-
   const togglePasswordVisibility = () => {
     setSecureEntry(!secureEntry);
+  };
+
+  const handleSignup = () => {
+    navigation.navigate('SignUp');
   };
 
   const loginUser = async () => {
     setEmailError('');
     setPasswordError('');
+
+    if (!role) {
+      alert('Please select a role.');
+      return;
+    }
 
     if (!email.trim()) {
       setEmailError('Email is required');
@@ -45,8 +52,48 @@ const LogIn = () => {
     }
 
     try {
-      await firebase.auth().signInWithEmailAndPassword(email.trim(), password);
-      navigation.navigate('AppDrawer'); // ✅ make sure this route exists
+      // Sign in with email and password
+      const userCredential = await firebase
+        .auth()
+        .signInWithEmailAndPassword(email.trim(), password);
+
+      const userId = userCredential.user.uid;
+
+      if (role === 'user') {
+        // Check if user exists in 'users' collection with role 'user'
+        let userDoc = await firebase.firestore().collection('users').doc(userId).get();
+
+        if (userDoc.exists) {
+          const userData = userDoc.data();
+          if (userData.role === 'user') {
+            navigation.replace('AppDrawer');
+          } else {
+            alert('This email is not registered as a user.');
+          }
+          return;
+        } else {
+          alert('User profile not found.');
+          return;
+        }
+      }
+
+      if (role === 'authority') {
+        // Check if authority exists in 'users' collection with role 'authority'
+        let authorityDoc = await firebase.firestore().collection('users').doc(userId).get();
+
+        if (authorityDoc.exists) {
+          const authorityData = authorityDoc.data();
+          if (authorityData.role === 'authority') {
+            navigation.replace('ActiveAlertsScreen');
+          } else {
+            alert('This email is not registered as an authority.');
+          }
+          return;
+        } else {
+          alert('Authority profile not found.');
+          return;
+        }
+      }
     } catch (error) {
       console.log('Login error:', error.code);
 
@@ -85,7 +132,26 @@ const LogIn = () => {
         />
       </View>
 
-      <View style={{ height: 90 }} />
+      <View style={{ height: 30 }} />
+
+      {/* Role Selector */}
+      <Text style={styles.label}>Select Role:</Text>
+      <View style={styles.roleContainer}>
+        <TouchableOpacity
+          style={[styles.roleButton, role === 'user' && styles.selectedRole]}
+          onPress={() => setRole('user')}
+        >
+          <Text style={[styles.roleText, role === 'user' && { color: '#fff' }]}>User</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.roleButton, role === 'authority' && styles.selectedRole]}
+          onPress={() => setRole('authority')}
+        >
+          <Text style={[styles.roleText, role === 'authority' && { color: '#fff' }]}>Authority</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={{ height: 20 }} />
 
       <View style={styles.inputGroup}>
         <Text style={styles.label}>Email:</Text>
@@ -96,6 +162,7 @@ const LogIn = () => {
           keyboardType="email-address"
           autoCapitalize="none"
           onChangeText={(text) => setEmail(text.trim())}
+          value={email}
         />
         {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
       </View>
@@ -109,6 +176,7 @@ const LogIn = () => {
             placeholderTextColor="#8391A1"
             secureTextEntry={secureEntry}
             onChangeText={(text) => setPassword(text)}
+            value={password}
           />
           <TouchableOpacity onPress={togglePasswordVisibility}>
             <Ionicons
@@ -119,9 +187,7 @@ const LogIn = () => {
             />
           </TouchableOpacity>
         </View>
-        {passwordError ? (
-          <Text style={styles.errorText}>{passwordError}</Text>
-        ) : null}
+        {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
       </View>
 
       <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
@@ -213,4 +279,29 @@ const styles = StyleSheet.create({
     color: '#1E2C3A',
     textAlign: 'center',
   },
+  roleContainer: {
+    flexDirection: 'row',
+    marginBottom: 20,
+  },
+  roleButton: {
+    flex: 1,
+    backgroundColor: '#DADADA',
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginHorizontal: 5,
+    alignItems: 'center',
+  },
+  selectedRole: {
+    backgroundColor: '#1E2C3A',
+  },
+  roleText: {
+    fontWeight: 'bold',
+    color: '#1E2C3A',
+  },
 });
+
+
+
+
+
+

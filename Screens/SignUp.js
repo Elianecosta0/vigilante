@@ -1,126 +1,352 @@
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
   StyleSheet,
-  Alert,
+  Text,
+  View,
+  TouchableOpacity,
+  TextInput,
   Image,
+  Alert,
+  ScrollView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { auth } from '../config';
+import { firebase } from '../config';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function SignUp() {
+const SignUp = () => {
   const navigation = useNavigation();
 
+  const [role, setRole] = useState('');
+
+  // User fields (combine firstName + lastName into name)
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [dob, setDob] = useState('');
+  const [emergencyContact, setEmergencyContact] = useState('');
+  const [gender, setGender] = useState('');
+  const [height, setHeight] = useState('');
+  const [weight, setWeight] = useState(''); // Add weight field
+  const [identifyingFeature, setIdentifyingFeature] = useState('');
   const [username, setUsername] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
+  // Authority field
+  const [securityNumber, setSecurityNumber] = useState('');
+
+  const [loading, setLoading] = useState(false);
+
   const handleSignUp = async () => {
-    if (!username || !password || !confirmPassword) {
-      Alert.alert('Validation Error', 'All fields are required.');
-      return;
-    }
+    setLoading(true);
 
     if (password !== confirmPassword) {
-      Alert.alert('Password Mismatch', 'Passwords do not match.');
+      Alert.alert('Error', 'Passwords do not match.');
+      setLoading(false);
       return;
     }
 
     try {
-      const email = `${username}@vigilante.com`; // simulate email from username
-      const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+      let emailToUse = '';
+      let userData = {};
 
-      const { uid } = userCredential.user;
+      if (role === 'authority') {
+        if (!securityNumber || !password || !confirmPassword) {
+          Alert.alert('Error', 'Please fill all fields for authority.');
+          setLoading(false);
+          return;
+        }
 
-      // Navigate to MoreInfo and pass user data
-      navigation.navigate('MoreInformation1', {
-        uid,
-        email,
-        username,
-      });
+        const docRef = firebase.firestore().collection('Authorities').doc(securityNumber);
+        const doc = await docRef.get();
+
+        if (!doc.exists) {
+          Alert.alert('Error', 'Invalid Security Number');
+          setLoading(false);
+          return;
+        }
+
+        emailToUse = `${securityNumber}@vigilante.com`;
+        userData = { ...doc.data(), role: 'authority', email: emailToUse };
+
+        let userCredential;
+        try {
+          userCredential = await firebase.auth().createUserWithEmailAndPassword(emailToUse, password);
+          console.log('Authority userCredential:', userCredential);
+        } catch (authError) {
+          console.error('Firebase Auth Error:', authError);
+          Alert.alert('Sign Up Error', authError.message || 'Failed to create user');
+          setLoading(false);
+          return;
+        }
+
+        if (!userCredential || !userCredential.user) {
+          Alert.alert('Error', 'Failed to create user. Please try again.');
+          setLoading(false);
+          return;
+        }
+        const uid = userCredential.user.uid;
+
+        await firebase.firestore().collection('users').doc(uid).set(userData);
+        await docRef.update({ email: emailToUse });
+
+        navigation.replace('ActiveAlertsScreen');
+
+      } else if (role === 'user') {
+        // Validation
+        if (
+          !firstName.trim() || !lastName.trim() || !dob.trim() || !emergencyContact.trim() || !gender.trim() ||
+          !height.trim() || !identifyingFeature.trim() || !username.trim() || !phone.trim() || !password || !confirmPassword
+        ) {
+          Alert.alert('Error', 'Please fill all fields for user.');
+          setLoading(false);
+          return;
+        }
+
+        const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
+
+        const cleanUsername = username.trim().toLowerCase().replace(/\s+/g, '');
+
+        if (!cleanUsername) {
+          Alert.alert('Error', 'Username cannot be empty or spaces.');
+          setLoading(false);
+          return;
+        }
+
+        emailToUse = `${cleanUsername}@vigilante.com`;
+
+        userData = {
+          name: fullName,
+          dob: dob.trim(),
+          emergencyContact: emergencyContact.trim(),
+          gender: gender.trim(),
+          height: height.trim(),
+          weight: weight.trim() || '',
+          identifyingFeature: identifyingFeature.trim(),
+          username: cleanUsername,
+          phone: phone.trim(),
+          role: 'user',
+          email: emailToUse,
+        };
+
+        let userCredential;
+        try {
+          userCredential = await firebase.auth().createUserWithEmailAndPassword(emailToUse, password);
+          console.log('User userCredential:', userCredential);
+        } catch (authError) {
+          console.error('Firebase Auth Error:', authError);
+          Alert.alert('Sign Up Error', authError.message || 'Failed to create user');
+          setLoading(false);
+          return;
+        }
+
+        if (!userCredential || !userCredential.user) {
+          Alert.alert('Error', 'Failed to create user. Please try again.');
+          setLoading(false);
+          return;
+        }
+        const uid = userCredential.user.uid;
+
+        userData.UID = uid;
+
+        await firebase.firestore().collection('users').doc(uid).set(userData);
+
+        navigation.replace('AppDrawer');
+
+      } else {
+        Alert.alert('Error', 'Please select a role.');
+      }
     } catch (error) {
-      console.error(error);
-      Alert.alert('Sign Up Error', error.message);
+      console.error('SignUp Error:', error);
+      Alert.alert('Error', error.message || 'Unexpected error occurred.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.logoContainer}>
-        <Image
-          source={require('../assets/vigilante-logo.png')}
-          style={styles.image}
-          resizeMode="contain"
-        />
-        <Image
-          source={require('../assets/Vigilantetxt.png')}
-          style={styles.txt}
-          resizeMode="contain"
-        />
-      </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        {/* Logo */}
+        <View style={styles.logoContainer}>
+          <Image source={require('../assets/vigilante-logo.png')} style={styles.image} resizeMode="contain" />
+          <Image source={require('../assets/Vigilantetxt.png')} style={styles.txt} resizeMode="contain" />
+        </View>
 
-      <View style={{ height: 90 }} />
+        {/* Role Selection */}
+        <Text style={styles.label}>Select Role:</Text>
+        <View style={styles.roleContainer}>
+          <TouchableOpacity
+            style={[styles.roleButton, role === 'user' && styles.selectedRole]}
+            onPress={() => setRole('user')}
+          >
+            <Text style={[styles.roleText, role === 'user' && { color: '#fff' }]}>User</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.roleButton, role === 'authority' && styles.selectedRole]}
+            onPress={() => setRole('authority')}
+          >
+            <Text style={[styles.roleText, role === 'authority' && { color: '#fff' }]}>Authority</Text>
+          </TouchableOpacity>
+        </View>
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>User Name:</Text>
-        <TextInput
-          placeholder="User Name"
-          style={styles.input}
-          placeholderTextColor="#8391A1"
-          value={username}
-          onChangeText={setUsername}
-          autoCapitalize="none"
-        />
-      </View>
+        {/* Authority Form */}
+        {role === 'authority' && (
+          <>
+            <Text style={styles.label}>Security Number:</Text>
+            <TextInput
+              style={styles.input}
+              value={securityNumber}
+              onChangeText={setSecurityNumber}
+              placeholder="Enter security number"
+              autoCapitalize="none"
+              keyboardType="number-pad"
+            />
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Password:</Text>
-        <TextInput
-          placeholder="Password"
-          style={styles.input}
-          placeholderTextColor="#8391A1"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
-      </View>
+            <Text style={styles.label}>Password:</Text>
+            <TextInput
+              style={styles.input}
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Enter password"
+              secureTextEntry
+            />
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Confirm Password:</Text>
-        <TextInput
-          placeholder="Confirm Password"
-          style={styles.input}
-          placeholderTextColor="#8391A1"
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          secureTextEntry
-        />
-      </View>
+            <Text style={styles.label}>Confirm Password:</Text>
+            <TextInput
+              style={styles.input}
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              placeholder="Confirm password"
+              secureTextEntry
+            />
+          </>
+        )}
 
-      <View style={{ height: 20 }} />
+        {/* User Form */}
+        {role === 'user' && (
+          <>
+            <Text style={styles.label}>First Name:</Text>
+            <TextInput
+              style={styles.input}
+              value={firstName}
+              onChangeText={setFirstName}
+              placeholder="Enter first name"
+              autoCapitalize="words"
+            />
+            <Text style={styles.label}>Last Name:</Text>
+            <TextInput
+              style={styles.input}
+              value={lastName}
+              onChangeText={setLastName}
+              placeholder="Enter last name"
+              autoCapitalize="words"
+            />
+            <Text style={styles.label}>Date of Birth:</Text>
+            <TextInput
+              style={styles.input}
+              value={dob}
+              onChangeText={setDob}
+              placeholder="YYYY-MM-DD"
+              autoCapitalize="none"
+            />
+            <Text style={styles.label}>Emergency Contact:</Text>
+            <TextInput
+              style={styles.input}
+              value={emergencyContact}
+              onChangeText={setEmergencyContact}
+              placeholder="Enter emergency contact"
+              keyboardType="phone-pad"
+            />
+            <Text style={styles.label}>Gender:</Text>
+            <TextInput
+              style={styles.input}
+              value={gender}
+              onChangeText={setGender}
+              placeholder="Enter gender"
+              autoCapitalize="none"
+            />
+            <Text style={styles.label}>Height:</Text>
+            <TextInput
+              style={styles.input}
+              value={height}
+              onChangeText={setHeight}
+              placeholder="Enter height"
+              keyboardType="numeric"
+              autoCapitalize="none"
+            />
+            <Text style={styles.label}>Weight:</Text>
+            <TextInput
+              style={styles.input}
+              value={weight}
+              onChangeText={setWeight}
+              placeholder="Enter weight"
+              keyboardType="numeric"
+              autoCapitalize="none"
+            />
+            <Text style={styles.label}>Identifying Feature:</Text>
+            <TextInput
+              style={styles.input}
+              value={identifyingFeature}
+              onChangeText={setIdentifyingFeature}
+              placeholder="Enter identifying feature"
+              autoCapitalize="none"
+            />
+            <Text style={styles.label}>Username:</Text>
+            <TextInput
+              style={styles.input}
+              value={username}
+              onChangeText={setUsername}
+              placeholder="Enter username"
+              autoCapitalize="none"
+            />
+            <Text style={styles.label}>Phone:</Text>
+            <TextInput
+              style={styles.input}
+              value={phone}
+              onChangeText={setPhone}
+              placeholder="Enter phone"
+              keyboardType="phone-pad"
+              autoCapitalize="none"
+            />
 
-      <View>
-        <TouchableOpacity style={styles.button} onPress={handleSignUp}>
-          <Text style={styles.buttonText}>Sign Up</Text>
-        </TouchableOpacity>
+            <Text style={styles.label}>Password:</Text>
+            <TextInput
+              style={styles.input}
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Enter password"
+              secureTextEntry
+            />
 
-        <TouchableOpacity onPress={() => navigation.navigate('LogIn')}>
-          <Text style={styles.linkText}>Already have an account? Log In</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+            <Text style={styles.label}>Confirm Password:</Text>
+            <TextInput
+              style={styles.input}
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              placeholder="Confirm password"
+              secureTextEntry
+            />
+          </>
+        )}
+
+        {/* Submit */}
+        {role !== '' && (
+          <TouchableOpacity style={styles.button} onPress={handleSignUp} disabled={loading}>
+            <Text style={styles.buttonText}>{loading ? 'Signing up...' : 'Sign Up'}</Text>
+          </TouchableOpacity>
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
-}
+};
+
+export default SignUp;
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     paddingHorizontal: 30,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
+    paddingBottom: 40,
   },
   logoContainer: {
     alignItems: 'center',
@@ -134,10 +360,6 @@ const styles = StyleSheet.create({
   txt: {
     width: 300,
     height: 50,
-    marginBottom: -30,
-  },
-  inputGroup: {
-    marginBottom: 5,
   },
   label: {
     fontSize: 14,
@@ -152,32 +374,49 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 15,
+    marginBottom: 15,
+  },
+  roleContainer: {
+    flexDirection: 'row',
     marginBottom: 20,
-
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-
-    elevation: 3,
+  },
+  roleButton: {
+    flex: 1,
+    backgroundColor: '#DADADA',
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginHorizontal: 5,
+    alignItems: 'center',
+  },
+  selectedRole: {
+    backgroundColor: '#1E2C3A',
+  },
+  roleText: {
+    fontWeight: 'bold',
+    color: '#1E2C3A',
   },
   button: {
     backgroundColor: '#1E2C3A',
     paddingVertical: 15,
     borderRadius: 8,
-    marginBottom: 15,
+    marginTop: 20,
   },
   buttonText: {
     color: '#fff',
     textAlign: 'center',
     fontWeight: 'bold',
-    fontSize: 16,
-  },
-  linkText: {
-    color: '#1E2C3A',
-    textAlign: 'center',
-    fontWeight: '600',
-    fontSize: 14,
   },
 });
+
+
+
+
+
+
+
+
+
+
+
+
 
