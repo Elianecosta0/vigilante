@@ -41,10 +41,59 @@ const EmergencyScreen = () => {
     setIsCounting(false);
   };
 
+  // fetch location and return coords directly
+  const fetchLocationFast = async () => {
+    let { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Denied', 'Location permission is needed to share your location.');
+      return null;
+    }
+
+    let currentLocation = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Balanced,
+    });
+
+    setLocation({
+      latitude: currentLocation.coords.latitude,
+      longitude: currentLocation.coords.longitude,
+    });
+
+    fetchAddress(currentLocation.coords.latitude, currentLocation.coords.longitude);
+
+    return {
+      latitude: currentLocation.coords.latitude,
+      longitude: currentLocation.coords.longitude,
+    };
+  };
+
+  const fetchAddress = async (latitude, longitude) => {
+    try {
+      let response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=YOUR_GOOGLE_API_KEY`
+      );
+      let json = await response.json();
+      if (json.results && json.results.length > 0) {
+        setAddress(json.results[0].formatted_address);
+      } else {
+        setAddress(null);
+      }
+    } catch (error) {
+      console.error(error);
+      setAddress(null);
+    }
+  };
+
   const handleEmergency = async () => {
     setLoading(true);
-    await fetchLocationFast();
+
+    const loc = await fetchLocationFast();
+
     setLoading(false);
+
+    if (!loc) {
+      Alert.alert('Error', 'Could not get location.');
+      return;
+    }
 
     const userId = getAuth().currentUser.uid;
 
@@ -61,7 +110,7 @@ const EmergencyScreen = () => {
       return;
     }
 
-    const alertMessage = `🚨 EMERGENCY ALERT 🚨\nLocation: ${address || 'Unknown'}\nMap: https://www.google.com/maps/search/?api=1&query=${location?.latitude},${location?.longitude}`;
+    const alertMessage = `🚨 EMERGENCY ALERT 🚨\nLocation: ${address || 'Unknown'}\nMap: https://www.google.com/maps/search/?api=1&query=${loc.latitude},${loc.longitude}`;
 
     // Send to each emergency contact
     for (let contact of contacts) {
@@ -87,51 +136,34 @@ const EmergencyScreen = () => {
       Alert.alert('Unable to alert police automatically. Please call 10111.');
     }
 
+    // Add alert to ActiveAlerts collection in Firestore
+    try {
+      const userDoc = await firebase.firestore().collection('users').doc(userId).get();
+      if (!userDoc.exists) {
+        Alert.alert('Error', 'User data not found.');
+        return;
+      }
+      const userData = userDoc.data();
+
+      const alertData = {
+        userId,
+        name: userData.name || '',
+        phone: userData.phone || '',
+        identifyingFeature: userData.identifyingFeature || '',
+        photoURL: userData.photoURL || '',
+        location: new firebase.firestore.GeoPoint(loc.latitude, loc.longitude),
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        status: 'active',
+      };
+
+      await firebase.firestore().collection('ActiveAlerts').add(alertData);
+    } catch (error) {
+      console.error('Error adding alert to Firestore:', error);
+      Alert.alert('Error', 'Failed to save alert to database.');
+    }
+
     Alert.alert('Emergency Alert Sent', 'Your emergency contacts and police have been notified.');
     setAlertSent(true); // mark alert sent, show map icon now
-  };
-
-  const fetchLocationFast = async () => {
-    let { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission Denied', 'Location permission is needed to share your location.');
-      return;
-    }
-
-    let lastLocation = await Location.getLastKnownPositionAsync();
-    if (lastLocation) {
-      setLocation({
-        latitude: lastLocation.coords.latitude,
-        longitude: lastLocation.coords.longitude,
-      });
-    }
-
-    let currentLocation = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.Balanced,
-    });
-    setLocation({
-      latitude: currentLocation.coords.latitude,
-      longitude: currentLocation.coords.longitude,
-    });
-
-    fetchAddress(currentLocation.coords.latitude, currentLocation.coords.longitude);
-  };
-
-  const fetchAddress = async (latitude, longitude) => {
-    try {
-      let response = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=YOUR_GOOGLE_API_KEY`
-      );
-      let json = await response.json();
-      if (json.results && json.results.length > 0) {
-        setAddress(json.results[0].formatted_address);
-      } else {
-        setAddress(null);
-      }
-    } catch (error) {
-      console.error(error);
-      setAddress(null);
-    }
   };
 
   return (
@@ -261,4 +293,6 @@ const styles = StyleSheet.create({
     maxWidth: 200,
   },
 });
+
+
 

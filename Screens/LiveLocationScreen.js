@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -8,28 +8,18 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
-import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context'; // ✅ real SafeAreaView
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-const LiveLocationScreen = ({ navigation }) => {
-  const [location, setLocation] = useState(null);
-  const [loading, setLoading] = useState(true);
+const LiveLocationScreen = ({ route, navigation }) => {
+  // Destructure location and name from route.params
+  const { location, name } = route.params;
 
-  useEffect(() => {
-    (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission Denied', 'Location permission is required to show your position.');
-        setLoading(false);
-        return;
-      }
-
-      let currentLocation = await Location.getCurrentPositionAsync({});
-      setLocation(currentLocation.coords);
-      setLoading(false);
-    })();
-  }, []);
+  if (!location || !location.latitude || !location.longitude) {
+    Alert.alert('Location not available', 'Cannot display live location.');
+    navigation.goBack();
+    return null;
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -43,30 +33,24 @@ const LiveLocationScreen = ({ navigation }) => {
 
       {/* Map */}
       <View style={styles.mapContainer}>
-        {loading ? (
-          <ActivityIndicator size="large" color="#001f4d" style={styles.loader} />
-        ) : (
-          location && (
-            <MapView
-              style={styles.map}
-              region={{
-                latitude: location.latitude,
-                longitude: location.longitude,
-                latitudeDelta: 0.01,
-                longitudeDelta: 0.01,
-              }}
-              showsUserLocation={true}
-            >
-              <Marker
-                coordinate={{
-                  latitude: location.latitude,
-                  longitude: location.longitude,
-                }}
-                title="You are here"
-              />
-            </MapView>
-          )
-        )}
+        <MapView
+          style={styles.map}
+          region={{
+            latitude: location.latitude,
+            longitude: location.longitude,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          }}
+          showsUserLocation={false} // this is the alert sender location, not current device
+        >
+          <Marker
+            coordinate={{
+              latitude: location.latitude,
+              longitude: location.longitude,
+            }}
+            title={name || 'Requester Location'}
+          />
+        </MapView>
       </View>
     </SafeAreaView>
   );
@@ -97,10 +81,6 @@ const styles = StyleSheet.create({
   },
   map: {
     flex: 1,
-  },
-  loader: {
-    flex: 1,
-    justifyContent: 'center',
   },
 });
 
