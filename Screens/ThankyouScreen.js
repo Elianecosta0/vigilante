@@ -1,16 +1,31 @@
+// ThankYouScreen.js
 import React, { useContext } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { CartContext } from '../components/CartContext'; 
 
-const ThankyouScreen = () => {
+const ThankYouScreen = () => {
   const navigation = useNavigation();
   const { clearCart } = useContext(CartContext);
 
   const handleContinueShopping = () => {
-    clearCart();  
-    navigation.navigate('MainApp', { screen: 'Merchandise' }); 
+    clearCart(); // Clear cart after purchase
+
+    // Reset navigation stack and go to Merchandise inside AppDrawer
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [
+          {
+            name: 'AppDrawer', // Your drawer navigator
+            state: {
+              routes: [{ name: 'Merchandise' }], // Nested drawer screen
+            },
+          },
+        ],
+      })
+    );
   };
 
   return (
@@ -19,7 +34,7 @@ const ThankyouScreen = () => {
       <Text style={styles.title}>Thank You!</Text>
       <Text style={styles.message}>
         A certain Percent From All Your Purchased Items{'\n'}
-        Will Be Donated To Help A good Casue
+        Will Be Donated To Help A Good Cause
       </Text>
 
       <TouchableOpacity style={styles.button} onPress={handleContinueShopping}>
@@ -29,7 +44,7 @@ const ThankyouScreen = () => {
   );
 };
 
-export default ThankyouScreen;
+export default ThankYouScreen;
 
 const styles = StyleSheet.create({
   container: {
@@ -64,3 +79,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+
+

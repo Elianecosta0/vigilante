@@ -23,6 +23,7 @@ const ProfileScreen = () => {
   const [uid, setUid] = useState(null);
   const [imageUri, setImageUri] = useState(null);
 
+  // Map Firestore fields to UI variables
   const [fullname, setFullname] = useState('');
   const [dob, setDob] = useState('');
   const [gender, setGender] = useState('');
@@ -40,14 +41,15 @@ const ProfileScreen = () => {
       userRef.get().then((doc) => {
         if (doc.exists) {
           const data = doc.data();
-          setFullname(data.fullname || '');
+          // Map Firestore fields to UI state
+          setFullname(data.name || '');
           setDob(data.dob || '');
           setGender(data.gender || '');
           setHeight(data.height || '');
           setWeight(data.weight || '');
-          setFeature(data.feature || '');
+          setFeature(data.identifyingFeature || '');
           setEmergencyContact(data.emergencyContact || '');
-          setContact(data.contact || '');
+          setContact(data.phone || '');
           setImageUri(data.profileImage || null);
         }
       });
@@ -82,7 +84,6 @@ const ProfileScreen = () => {
 
   const uploadImageToCloudinary = async (imageUri) => {
     try {
-      // Prepare form data for upload
       const data = new FormData();
       data.append('file', {
         uri: imageUri,
@@ -101,12 +102,11 @@ const ProfileScreen = () => {
       const json = await response.json();
 
       if (json.secure_url) {
-        // Save URL to Firestore under user document
         await firebase.firestore().collection('users').doc(uid).set(
           { profileImage: json.secure_url },
           { merge: true }
         );
-        setImageUri(json.secure_url); // update preview to uploaded URL
+        setImageUri(json.secure_url);
         Alert.alert('Success', 'Image uploaded and saved!');
       } else {
         Alert.alert('Upload Failed', 'Failed to upload image to Cloudinary');
@@ -121,16 +121,17 @@ const ProfileScreen = () => {
   const handleSave = async () => {
     if (!uid) return;
     try {
+      // Save to original Firestore field names
       await firebase.firestore().collection('users').doc(uid).set(
         {
-          fullname,
+          name: fullname,
           dob,
           gender,
           height,
           weight,
-          feature,
+          identifyingFeature: feature,
           emergencyContact,
-          contact,
+          phone: contact,
         },
         { merge: true }
       );
@@ -189,7 +190,7 @@ const ProfileScreen = () => {
             keyboardType="phone-pad"
           />
 
-          <Text style={styles.label}>Contact</Text>
+          <Text style={styles.label}>Phone</Text>
           <TextInput
             style={styles.input}
             value={contact}
@@ -206,20 +207,11 @@ const ProfileScreen = () => {
   );
 };
 
-// (Make sure to add your styles here)
-
 export default ProfileScreen;
 
-
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: 'white',
-  },
-  container: {
-    flex: 1,
-    backgroundColor: 'white',
-  },
+  safeArea: { flex: 1, backgroundColor: 'white' },
+  container: { flex: 1, backgroundColor: 'white' },
   backButtonWraper: {
     height: 50,
     width: 50,
@@ -234,17 +226,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
   },
-  header: {
-    fontWeight: 'bold',
-    fontSize: 25,
-    alignSelf: 'center',
-    marginTop: -30,
-    color: '#000',
-  },
-  profileSection: {
-    alignItems: 'center',
-    marginTop: 30,
-  },
+  header: { fontWeight: 'bold', fontSize: 25, alignSelf: 'center', marginTop: -30, color: '#000' },
+  profileSection: { alignItems: 'center', marginTop: 30 },
   profilePictureContainer: {
     width: 168,
     height: 168,
@@ -260,37 +243,11 @@ const styles = StyleSheet.create({
     elevation: 10,
     position: 'relative',
   },
-  profileImage: {
-  width: 100,
-  height: 100,
-  borderRadius: 50,
-},
-
-  cameraIcon: {
-    position: 'absolute',
-    bottom: 7,
-    right: 10,
-  },
-  username: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginTop: 10,
-  },
-  pencilIcon: {
-    position: 'absolute',
-    right: 100,
-    top: 220,
-  },
-  inputContainer: {
-    marginTop: 20,
-    marginHorizontal: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 6,
-    color: 'black',
-  },
+  profileImage: { width: 100, height: 100, borderRadius: 50 },
+  cameraIcon: { position: 'absolute', bottom: 7, right: 10 },
+  username: { fontSize: 16, fontWeight: 'bold', marginTop: 10 },
+  inputContainer: { marginTop: 20, marginHorizontal: 20 },
+  label: { fontSize: 14, fontWeight: '600', marginBottom: 6, color: 'black' },
   input: {
     height: 45,
     borderColor: '#ddd',
@@ -314,9 +271,6 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 5,
   },
-  saveButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
+  saveButtonText: { color: 'white', fontSize: 16, fontWeight: 'bold' },
 });
+
