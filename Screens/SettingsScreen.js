@@ -14,14 +14,13 @@ const SettingsScreen = ({ navigation }) => {
   };
 
     const handleLogout = async () => {
-    try {
-      await firebase.auth().signOut();
-      navigation.navigate('LogIn');
-    } catch (error) {
-      console.error('Error logging out:', error);
-    }
-  };
-
+  try {
+    await firebase.auth().signOut();
+     navigation.replace("LogIn"); 
+  } catch (error) {
+    console.error('Error logging out:', error);
+  }
+};
   return (
     <SafeAreaView style={styles.container}>
       {/* Top bar with hamburger menu */}
@@ -34,24 +33,11 @@ const SettingsScreen = ({ navigation }) => {
       {/* Screen title */}
       <Text style={styles.title}>Settings</Text>
 
-      {/* My Details */}
-      <TouchableOpacity
-        style={styles.sectionHeader}
-        onPress={() => navigation.navigate('MyDetails')}
-      >
-        <Text style={styles.sectionText}>My Details</Text>
-        <Icon name="chevron-forward-outline" size={20} />
-      </TouchableOpacity>
+    
 
       {/* Options */}
       <View style={styles.card}>
-        <TouchableOpacity
-          style={styles.optionRow}
-          onPress={() => navigation.navigate('MainTabs', { screen: 'Profile' })}
-        >
-          <Icon name="person-outline" size={20} />
-          <Text style={styles.optionText}>Edit profile</Text>
-        </TouchableOpacity>
+        
 
         <TouchableOpacity style={styles.optionRow}>
           <Icon name="shield-checkmark-outline" size={20} />

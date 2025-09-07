@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   StyleSheet,
   Text,
@@ -6,208 +6,218 @@ import {
   TouchableOpacity,
   TextInput,
   Image,
+  Alert,
+  ScrollView
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { firebase } from '../config';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
 
 const LogIn = () => {
   const navigation = useNavigation();
 
   const [role, setRole] = useState('');
-
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [secureEntry, setSecureEntry] = useState(true);
-
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
 
-  const togglePasswordVisibility = () => {
-    setSecureEntry(!secureEntry);
+  // 2FA states
+  const [phone, setPhone] = useState('');
+  const [verificationId, setVerificationId] = useState(null);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [is2FA, setIs2FA] = useState(false);
+  const [resendTimer, setResendTimer] = useState(30);
+  const recaptchaVerifier = useRef(null);
+  const timerRef = useRef(null);
+
+  const togglePasswordVisibility = () => setSecureEntry(!secureEntry);
+  const handleSignup = () => navigation.navigate('SignUp');
+
+  const startTimer = () => {
+    setResendTimer(30);
+    if (timerRef.current) clearInterval(timerRef.current);
+
+    timerRef.current = setInterval(() => {
+      setResendTimer(prev => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
   };
 
-  const handleSignup = () => {
-    navigation.navigate('SignUp');
-  };
-
+  // Step 1: Email/password login
   const loginUser = async () => {
     setEmailError('');
     setPasswordError('');
 
-    if (!role) {
-      alert('Please select a role.');
-      return;
-    }
-
-    if (!email.trim()) {
-      setEmailError('Email is required');
-      return;
-    }
-
-    if (!password) {
-      setPasswordError('Password is required');
-      return;
-    }
+    if (!role) { alert('Please select a role.'); return; }
+    if (!email.trim()) { setEmailError('Email is required'); return; }
+    if (!password) { setPasswordError('Password is required'); return; }
 
     try {
-      // Sign in with email and password
-      const userCredential = await firebase
-        .auth()
-        .signInWithEmailAndPassword(email.trim(), password);
-
+      const userCredential = await firebase.auth().signInWithEmailAndPassword(email.trim(), password);
       const userId = userCredential.user.uid;
+      const userDoc = await firebase.firestore().collection('users').doc(userId).get();
 
-      if (role === 'user') {
-        // Check if user exists in 'users' collection with role 'user'
-        let userDoc = await firebase.firestore().collection('users').doc(userId).get();
+      if (!userDoc.exists) { alert('Profile not found.'); return; }
 
-        if (userDoc.exists) {
-          const userData = userDoc.data();
-          if (userData.role === 'user') {
-            navigation.replace('AppDrawer');
-          } else {
-            alert('This email is not registered as a user.');
-          }
-          return;
-        } else {
-          alert('User profile not found.');
-          return;
-        }
+      const userData = userDoc.data();
+
+      if (userData.role !== role) {
+        alert(`This email is not registered as ${role}.`);
+        return;
       }
 
-      if (role === 'authority') {
-        // Check if authority exists in 'users' collection with role 'authority'
-        let authorityDoc = await firebase.firestore().collection('users').doc(userId).get();
-
-        if (authorityDoc.exists) {
-          const authorityData = authorityDoc.data();
-          if (authorityData.role === 'authority') {
-            navigation.replace('ActiveAlertsScreen');
-          } else {
-            alert('This email is not registered as an authority.');
-          }
-          return;
-        } else {
-          alert('Authority profile not found.');
-          return;
-        }
+      if (!userCredential.user.emailVerified) {
+        alert('Please verify your email before logging in.');
+        return;
       }
+
+      if (!userData.phone) {
+        alert('No phone number registered for 2FA.');
+        return;
+      }
+
+      setPhone(userData.phone);
+      setIs2FA(true);
+      send2FACode(userData.phone);
+
     } catch (error) {
       console.log('Login error:', error.code);
-
       switch (error.code) {
-        case 'auth/invalid-email':
-          setEmailError('Please enter a valid email address.');
-          break;
-        case 'auth/user-not-found':
-          setEmailError('No account found with this email.');
-          break;
-        case 'auth/wrong-password':
-          setPasswordError('Incorrect password.');
-          break;
-        case 'auth/invalid-credential':
-          alert('The supplied auth credential is incorrect or malformed.');
-          break;
-        default:
-          alert(error.message);
-          break;
+        case 'auth/invalid-email': setEmailError('Please enter a valid email address.'); break;
+        case 'auth/user-not-found': setEmailError('No account found with this email.'); break;
+        case 'auth/wrong-password': setPasswordError('Incorrect password.'); break;
+        default: alert(error.message); break;
       }
+    }
+  };
+
+  // Step 2: Send 2FA SMS
+  const send2FACode = async (phoneNumber) => {
+    try {
+      const phoneProvider = new firebase.auth.PhoneAuthProvider();
+      const id = await phoneProvider.verifyPhoneNumber(phoneNumber, recaptchaVerifier.current);
+      setVerificationId(id);
+      startTimer();
+      Alert.alert('Verification code sent', `Code sent to ${phoneNumber}`);
+    } catch (error) {
+      alert('Failed to send verification code.');
+      console.log(error);
+    }
+  };
+
+  // Step 3: Verify 2FA code
+  const verify2FACode = async () => {
+    try {
+      const credential = firebase.auth.PhoneAuthProvider.credential(
+        verificationId,
+        verificationCode
+      );
+
+      const currentUser = firebase.auth().currentUser;
+
+      if (currentUser.phoneNumber) {
+        // Already linked -> sign in
+        await currentUser.linkWithCredential(credential).catch(async err => {
+          if (err.code === 'auth/provider-already-linked') {
+            // Phone already linked, just continue
+            if (role === 'user') navigation.replace('AppDrawer');
+            else if (role === 'authority') navigation.replace('ActiveAlertsScreen');
+          } else throw err;
+        });
+      } else {
+        // Link phone
+        await currentUser.linkWithCredential(credential);
+      }
+
+      if (role === 'user') navigation.replace('AppDrawer');
+      else if (role === 'authority') navigation.replace('ActiveAlertsScreen');
+
+    } catch (error) {
+      console.log('2FA error:', error);
+      Alert.alert('Error', error.message.includes('verification code') ? 'Invalid verification code. Try again.' : error.message);
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.logoContainer}>
-        <Image
-          source={require('../assets/vigilante-logo.png')}
-          style={styles.image}
-          resizeMode="contain"
-        />
-        <Image
-          source={require('../assets/Vigilantetxt.png')}
-          style={styles.txt}
-          resizeMode="contain"
-        />
-      </View>
-
-      <View style={{ height: 30 }} />
-
-      {/* Role Selector */}
-      <Text style={styles.label}>Select Role:</Text>
-      <View style={styles.roleContainer}>
-        <TouchableOpacity
-          style={[styles.roleButton, role === 'user' && styles.selectedRole]}
-          onPress={() => setRole('user')}
-        >
-          <Text style={[styles.roleText, role === 'user' && { color: '#fff' }]}>User</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.roleButton, role === 'authority' && styles.selectedRole]}
-          onPress={() => setRole('authority')}
-        >
-          <Text style={[styles.roleText, role === 'authority' && { color: '#fff' }]}>Authority</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={{ height: 20 }} />
-
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Email:</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter your email"
-          placeholderTextColor="#8391A1"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          onChangeText={(text) => setEmail(text.trim())}
-          value={email}
-        />
-        {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
-      </View>
-
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Password:</Text>
-        <View style={styles.passwordInputContainer}>
-          <TextInput
-            style={[styles.input, { flex: 1 }]}
-            placeholder="Enter your password"
-            placeholderTextColor="#8391A1"
-            secureTextEntry={secureEntry}
-            onChangeText={(text) => setPassword(text)}
-            value={password}
-          />
-          <TouchableOpacity onPress={togglePasswordVisibility}>
-            <Ionicons
-              name={secureEntry ? 'eye-off' : 'eye'}
-              size={22}
-              color="#8391A1"
-              style={{ marginLeft: -35 }}
-            />
-          </TouchableOpacity>
+      <FirebaseRecaptchaVerifierModal
+        ref={recaptchaVerifier}
+        firebaseConfig={firebase.app().options}
+      />
+      <ScrollView contentContainerStyle={{ padding: 20 }}>
+        <View style={styles.logoContainer}>
+          <Image source={require('../assets/vigilante-logo.png')} style={styles.image} resizeMode="contain" />
+          <Image source={require('../assets/Vigilantetxt.png')} style={styles.txt} resizeMode="contain" />
         </View>
-        {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
-      </View>
 
-      <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
-        <Text style={styles.forgotPassword}>Forgot Password?</Text>
-      </TouchableOpacity>
+        {!is2FA ? (
+          <>
+            <Text style={styles.label}>Select Role:</Text>
+            <View style={styles.roleContainer}>
+              <TouchableOpacity style={[styles.roleButton, role==='user'&&styles.selectedRole]} onPress={()=>setRole('user')}>
+                <Text style={[styles.roleText, role==='user'&&{color:'#fff'}]}>User</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.roleButton, role==='authority'&&styles.selectedRole]} onPress={()=>setRole('authority')}>
+                <Text style={[styles.roleText, role==='authority'&&{color:'#fff'}]}>Authority</Text>
+              </TouchableOpacity>
+            </View>
 
-      <View style={{ height: 50 }} />
+            <Text style={styles.label}>Email:</Text>
+            <TextInput style={styles.input} placeholder="Enter email" autoCapitalize="none" keyboardType="email-address" value={email} onChangeText={setEmail} />
+            {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
 
-      <TouchableOpacity style={styles.button} onPress={loginUser}>
-        <Text style={styles.buttonText}>Log In</Text>
-      </TouchableOpacity>
+            <Text style={styles.label}>Password:</Text>
+            <View style={styles.passwordInputContainer}>
+              <TextInput style={[styles.input,{flex:1}]} placeholder="Password" secureTextEntry={secureEntry} value={password} onChangeText={setPassword} />
+              <TouchableOpacity onPress={togglePasswordVisibility}>
+                <Ionicons name={secureEntry?'eye-off':'eye'} size={22} color="#8391A1" style={{marginLeft:-35}}/>
+              </TouchableOpacity>
+            </View>
+            {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
 
-      <TouchableOpacity onPress={handleSignup}>
-        <Text style={styles.linkText}>Don't have an account? Sign Up</Text>
-      </TouchableOpacity>
+            <TouchableOpacity onPress={()=>navigation.navigate('ForgotPassword')}>
+              <Text style={styles.forgotPassword}>Forgot Password?</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.button} onPress={loginUser}>
+              <Text style={styles.buttonText}>Log In</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={handleSignup}>
+              <Text style={styles.linkText}>Don't have an account? Sign Up</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <View style={{marginTop:20}}>
+            <Text style={styles.label}>Enter Verification Code sent to {phone}:</Text>
+            <TextInput style={styles.input} placeholder="123456" keyboardType="number-pad" value={verificationCode} onChangeText={setVerificationCode} />
+            <TouchableOpacity style={styles.button} onPress={verify2FACode}>
+              <Text style={styles.buttonText}>Verify Code</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity disabled={resendTimer>0} onPress={()=>send2FACode(phone)}>
+              <Text style={{color:resendTimer>0?'#8391A1':'#007AFF', textAlign:'center', marginTop:15}}>
+                {resendTimer>0?`Resend Code in ${resendTimer}s`:'Resend Code'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </ScrollView>
     </SafeAreaView>
   );
 };
 
 export default LogIn;
+
 
 const styles = StyleSheet.create({
   container: {
@@ -299,6 +309,19 @@ const styles = StyleSheet.create({
     color: '#1E2C3A',
   },
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

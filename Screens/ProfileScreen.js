@@ -1,27 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
-  ScrollView,
-  TextInput,
-  Alert,
   Image,
+  FlatList,
+  ActivityIndicator,
+  Alert,
+  Share
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import * as ImagePicker from 'expo-image-picker';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { firebase } from '../config';
 
-const CLOUDINARY_UPLOAD_PRESET = 'my_app_preset'; // replace with your Cloudinary upload preset
-const CLOUDINARY_CLOUD_NAME = 'daeqsogvx'; // replace with your Cloudinary cloud name
-
 const ProfileScreen = () => {
+  const [userData, setUserData] = useState(null);
+  const [userPosts, setUserPosts] = useState([]);
+  const [reports, setReports] = useState([]);
+  const [loadingPosts, setLoadingPosts] = useState(true);
+  const [loadingReports, setLoadingReports] = useState(true);
+  
+
+
   const navigation = useNavigation();
-  const [uid, setUid] = useState(null);
-  const [imageUri, setImageUri] = useState(null);
+  const auth = firebase.auth();
 
   // Map Firestore fields to UI variables
   const [fullname, setFullname] = useState('');
@@ -33,244 +37,193 @@ const ProfileScreen = () => {
   const [emergencyContact, setEmergencyContact] = useState('');
   const [contact, setContact] = useState('');
 
+
+  // Fetch current user data
   useEffect(() => {
-    const user = firebase.auth().currentUser;
-    if (user) {
-      setUid(user.uid);
-      const userRef = firebase.firestore().collection('users').doc(user.uid);
-      userRef.get().then((doc) => {
-        if (doc.exists) {
-          const data = doc.data();
-          // Map Firestore fields to UI state
-          setFullname(data.name || '');
-          setDob(data.dob || '');
-          setGender(data.gender || '');
-          setHeight(data.height || '');
-          setWeight(data.weight || '');
-          setFeature(data.identifyingFeature || '');
-          setEmergencyContact(data.emergencyContact || '');
-          setContact(data.phone || '');
-          setImageUri(data.profileImage || null);
+
+    const fetchUser = async () => {
+      try {
+        const user = auth.currentUser;
+        if (user) {
+          const doc = await firebase.firestore().collection('users').doc(user.uid).get();
+          if (doc.exists) setUserData(doc.data());
+
         }
-      });
-    }
+      } catch (err) {
+        console.error('Error fetching user:', err);
+      }
+    };
+    fetchUser();
   }, []);
 
-  const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission Denied', 'Sorry, we need media library permissions to select images.');
+  // Fetch user posts
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const unsubscribe = firebase
+      .firestore()
+      .collection('posters')
+      .where('postedBy', '==', user.uid)
+      .orderBy('timestamp', 'desc')
+      .onSnapshot(snapshot => {
+        const posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setUserPosts(posts);
+        setLoadingPosts(false);
+      });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Fetch reports for user’s posts
+  useEffect(() => {
+    if (userPosts.length === 0) {
+      setReports([]);
+      setLoadingReports(false);
       return;
     }
 
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.7,
+    const unsubscribe = firebase.firestore()
+      .collection('reports')
+      .where('posterId', 'in', userPosts.map(p => p.id))
+      .orderBy('timestamp', 'desc')
+      .onSnapshot(snapshot => {
+        const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setReports(list);
+        setLoadingReports(false);
       });
 
-      if (!result.canceled && result.assets?.length > 0) {
-        const uri = result.assets[0].uri;
-        setImageUri(uri); // Show preview immediately
-        await uploadImageToCloudinary(uri);
-      }
-    } catch (error) {
-      console.error('Image picking error:', error);
-      Alert.alert('Error', 'Failed to pick image.');
-    }
-  };
+    return () => unsubscribe();
+  }, [userPosts]);
 
-  const uploadImageToCloudinary = async (imageUri) => {
-    try {
-      const data = new FormData();
-      data.append('file', {
-        uri: imageUri,
-        type: 'image/jpeg',
-        name: 'upload.jpg',
-      });
-      data.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-
-      const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
-        {
-          method: 'POST',
-          body: data,
+  const handleDeletePost = (postId) => {
+    Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await firebase.firestore().collection('posters').doc(postId).delete();
+            Alert.alert('Deleted', 'Your post has been deleted.');
+          } catch (err) {
+            console.error('Delete error:', err);
+          }
         }
-      );
-      const json = await response.json();
-
-      if (json.secure_url) {
-        await firebase.firestore().collection('users').doc(uid).set(
-          { profileImage: json.secure_url },
-          { merge: true }
-        );
-        setImageUri(json.secure_url);
-        Alert.alert('Success', 'Image uploaded and saved!');
-      } else {
-        Alert.alert('Upload Failed', 'Failed to upload image to Cloudinary');
-        console.error('Cloudinary upload failed:', json);
       }
+    ]);
+  };
+
+  const handleShare = async (poster) => {
+    try {
+
+      await Share.share({
+        message: `🚨 Missing Person Alert 🚨\n\nName: ${poster.name}, Age: ${poster.age}\nLast seen: ${poster.lastSeen}\n\nDescription: ${poster.description}`,
+        url: poster.imageUrl || '',
+        title: 'Missing Person Poster'
+      });
+
     } catch (error) {
-      console.error('Upload error:', error);
-      Alert.alert('Upload Failed', error.message);
+      console.error('Error sharing:', error);
     }
   };
 
-  const handleSave = async () => {
-    if (!uid) return;
-    try {
-      // Save to original Firestore field names
-      await firebase.firestore().collection('users').doc(uid).set(
-        {
-          name: fullname,
-          dob,
-          gender,
-          height,
-          weight,
-          identifyingFeature: feature,
-          emergencyContact,
-          phone: contact,
-        },
-        { merge: true }
-      );
-      Alert.alert('Profile Updated', 'Your changes have been saved.');
-    } catch (error) {
-      console.error(error);
-      Alert.alert('Error', 'Something went wrong while saving.');
-    }
+
+  const handleMessage = (poster) => {
+    navigation.navigate('SendMessage', {
+      recipientId: poster.postedBy,
+      posterId: poster.id
+    });
+
   };
+
+  const renderPost = ({ item }) => (
+    <View style={styles.postCard}>
+      <View style={styles.postHeader}>
+        <Image source={{ uri: item.posterAvatar || 'https://via.placeholder.com/40' }} style={styles.avatar} />
+        <View style={{ flex: 1 }}>
+          <Text style={styles.username}>{item.posterName || 'Unknown'}</Text>
+          <Text style={styles.postTime}>{new Date(item.timestamp?.toDate()).toLocaleDateString()}</Text>
+        </View>
+        <Ionicons name="ellipsis-horizontal" size={20} color="#444" />
+      </View>
+
+      <Image source={{ uri: item.imageUrl || 'https://via.placeholder.com/400' }} style={styles.postImage} />
+
+      <View style={styles.postActions}>
+        <TouchableOpacity onPress={() => handleShare(item)}>
+          <Ionicons name="paper-plane-outline" size={28} color="#000" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => handleMessage(item)}>
+          <Ionicons name="chatbox-ellipses-outline" size={28} color="#000" style={{ marginLeft: 15 }} />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => handleDeletePost(item.id)}>
+          <Ionicons name="trash-outline" size={28} color="red" style={{ marginLeft: 15 }} />
+        </TouchableOpacity>
+      </View>
+
+      <Text style={styles.description}>{item.description}</Text>
+      <Text style={styles.reportsCount} onPress={() => navigation.navigate('ReportScreen', { posterId: item.id })}>
+        Reports: {reports.filter(r => r.posterId === item.id).length}
+      </Text>
+    </View>
+  );
+
+
+  if (!userData) return (
+    <View style={styles.centered}><ActivityIndicator size="large" color="#2f4156" /></View>
+  );
+
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.container}>
-        <TouchableOpacity style={styles.backButtonWraper} onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back-sharp" color="black" size={30} />
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Image source={{ uri: userData.profileImage || 'https://via.placeholder.com/100' }} style={styles.profilePic} />
+        <Text style={styles.username}>{userData.name || 'Anonymous'}</Text>
+      </View>
+
+      <View style={styles.buttonsRow}>
+        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('MyDetails')}>
+          <Text style={styles.buttonText}>Edit Profile</Text>
         </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('AddPoster')}>
+          <Ionicons name="add-circle-outline" size={20} color="#fff" />
+          <Text style={styles.buttonText}> Create Post</Text>
+        </TouchableOpacity>
+      </View>
 
-        <Text style={styles.header}>Profile</Text>
-
-        <View style={styles.profileSection}>
-          <TouchableOpacity style={styles.profilePictureContainer} onPress={pickImage}>
-            {imageUri ? (
-              <Image source={{ uri: imageUri }} style={styles.profileImage} />
-            ) : (
-              <Ionicons name="person-circle-outline" size={100} color="#A3BBC0" />
-            )}
-            <Ionicons name="camera" size={26} color="#A3BBC0" style={styles.cameraIcon} />
-          </TouchableOpacity>
-          <Text style={styles.username}>{fullname || 'Username'}</Text>
-        </View>
-
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Full Name</Text>
-          <TextInput style={styles.input} value={fullname} onChangeText={setFullname} />
-
-          <Text style={styles.label}>DOB</Text>
-          <TextInput style={styles.input} value={dob} onChangeText={setDob} />
-
-          <Text style={styles.label}>Gender</Text>
-          <TextInput style={styles.input} value={gender} onChangeText={setGender} />
-
-          <Text style={styles.label}>Height</Text>
-          <TextInput style={styles.input} value={height} onChangeText={setHeight} />
-
-          <Text style={styles.label}>Weight</Text>
-          <TextInput style={styles.input} value={weight} onChangeText={setWeight} />
-
-          <Text style={styles.label}>Identifying Feature</Text>
-          <TextInput style={styles.input} value={feature} onChangeText={setFeature} />
-
-          <Text style={styles.label}>Emergency Contact</Text>
-          <TextInput
-            style={styles.input}
-            value={emergencyContact}
-            onChangeText={setEmergencyContact}
-            keyboardType="phone-pad"
-          />
-
-          <Text style={styles.label}>Phone</Text>
-          <TextInput
-            style={styles.input}
-            value={contact}
-            onChangeText={setContact}
-            keyboardType="phone-pad"
-          />
-        </View>
-      </ScrollView>
-
-      <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-        <Text style={styles.saveButtonText}>Save Changes</Text>
-      </TouchableOpacity>
+      {loadingPosts ? <ActivityIndicator size="large" color="#2f4156" /> :
+        <FlatList
+          data={userPosts}
+          renderItem={renderPost}
+          keyExtractor={item => item.id}
+          contentContainerStyle={{ paddingHorizontal: 10, paddingBottom: 20 }}
+        />
+      }
     </SafeAreaView>
   );
 };
 
-export default ProfileScreen;
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: 'white' },
-  container: { flex: 1, backgroundColor: 'white' },
-  backButtonWraper: {
-    height: 50,
-    width: 50,
-    backgroundColor: 'white',
-    borderRadius: 11,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 30,
-    marginTop: 30,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  header: { fontWeight: 'bold', fontSize: 25, alignSelf: 'center', marginTop: -30, color: '#000' },
-  profileSection: { alignItems: 'center', marginTop: 30 },
-  profilePictureContainer: {
-    width: 168,
-    height: 168,
-    borderRadius: 84,
-    borderWidth: 2,
-    borderColor: '#A3BBC0',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.2,
-    shadowRadius: 15,
-    elevation: 10,
-    position: 'relative',
-  },
-  profileImage: { width: 100, height: 100, borderRadius: 50 },
-  cameraIcon: { position: 'absolute', bottom: 7, right: 10 },
-  username: { fontSize: 16, fontWeight: 'bold', marginTop: 10 },
-  inputContainer: { marginTop: 20, marginHorizontal: 20 },
-  label: { fontSize: 14, fontWeight: '600', marginBottom: 6, color: 'black' },
-  input: {
-    height: 45,
-    borderColor: '#ddd',
-    borderWidth: 1,
-    borderRadius: 8,
-    backgroundColor: '#f0f0f0',
-    paddingHorizontal: 10,
-    marginBottom: 16,
-    color: 'black',
-  },
-  saveButton: {
-    backgroundColor: '#2F3C4E',
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    margin: 20,
-    marginBottom: 60,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 5,
-  },
-  saveButtonText: { color: 'white', fontSize: 16, fontWeight: 'bold' },
+  container: { flex: 1, backgroundColor: '#fff' },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  header: { alignItems: 'center', paddingVertical: 20, backgroundColor: '#f8f8f8' },
+  profilePic: { width: 100, height: 100, borderRadius: 50, marginBottom: 10 },
+  username: { fontSize: 22, fontWeight: '700' },
+  buttonsRow: { flexDirection: 'row', justifyContent: 'center', marginBottom: 15 },
+  button: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#2f4156', paddingHorizontal: 15, paddingVertical: 8, borderRadius: 8, marginHorizontal: 5 },
+  buttonText: { color: '#fff', fontWeight: '600', marginLeft: 5 },
+
+  postCard: { backgroundColor: '#f9f9f9', borderRadius: 10, marginBottom: 15, padding: 10 },
+  postHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
+  avatar: { width: 40, height: 40, borderRadius: 20, marginRight: 10 },
+  postImage: { width: '100%', height: 200, borderRadius: 8, marginBottom: 10 },
+  postActions: { flexDirection: 'row', marginBottom: 10 },
+  description: { fontSize: 14, color: '#555', marginBottom: 5 },
+  reportsCount: { fontSize: 12, color: '#007AFF' }
 });
+
+export default ProfileScreen;
+
 

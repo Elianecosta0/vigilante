@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, Image, StyleSheet, ScrollView, Alert, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions } from '@react-navigation/native';
 
@@ -9,9 +9,9 @@ const donations = [
     title: "Support Victims of Domestic Violence",
     description: "Help provide shelter and counseling for survivors",
     progress: 0.65,
-    target: "$50,000",
-    raised: "$32,500",
-    donors: "1.2K donors",
+    target: 50000, // number for easier math
+    raised: 32500,
+    donors: 1200,
     image: require('../assets/photo1.jpg'),
   },
   {
@@ -19,16 +19,40 @@ const donations = [
     title: "Community Safety Initiative",
     description: "Fund neighborhood watch programs and safety workshops",
     progress: 0.35,
-    target: "$30,000",
-    raised: "$10,500",
-    donors: "845 donors",
+    target: 30000,
+    raised: 10500,
+    donors: 845,
     image: require('../assets/photo3.jpg'),
   },
 ];
 
 const DonationScreen = ({ navigation }) => {
+  const [localDonations, setLocalDonations] = useState(donations);
+
+  // Simulate donation
+  const handleDonate = (id) => {
+    const updatedDonations = localDonations.map(item => {
+      if (item.id === id) {
+        const newRaised = item.raised + 100; // fake donation of $100
+        const newProgress = Math.min(newRaised / item.target, 1); // cap at 100%
+
+        return {
+          ...item,
+          raised: newRaised,
+          donors: item.donors + 1,
+          progress: newProgress,
+        };
+      }
+      return item;
+    });
+
+    setLocalDonations(updatedDonations);
+    Alert.alert("Thank you!", "Your $100 donation has been recorded (simulation only).");
+  };
+
   return (
-    <ScrollView style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <ScrollView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}>
@@ -40,7 +64,7 @@ const DonationScreen = ({ navigation }) => {
 
       {/* Donation List */}
       <View style={styles.donationList}>
-        {donations.map(item => (
+        {localDonations.map(item => (
           <TouchableOpacity
             key={item.id.toString()}
             style={styles.donationCard}
@@ -57,15 +81,15 @@ const DonationScreen = ({ navigation }) => {
                   <View style={[styles.progressFill, { width: `${item.progress * 100}%` }]} />
                 </View>
                 <View style={styles.progressTextContainer}>
-                  <Text style={styles.progressText}>Raised: {item.raised}</Text>
-                  <Text style={styles.progressText}>Goal: {item.target}</Text>
+                  <Text style={styles.progressText}>Raised: ${item.raised.toLocaleString()}</Text>
+                  <Text style={styles.progressText}>Goal: ${item.target.toLocaleString()}</Text>
                 </View>
               </View>
 
               {/* Footer */}
               <View style={styles.donationFooter}>
-                <Text style={styles.donorCount}>{item.donors}</Text>
-                <TouchableOpacity style={styles.donateButton}>
+                <Text style={styles.donorCount}>{item.donors.toLocaleString()} donors</Text>
+                <TouchableOpacity style={styles.donateButton} onPress={() => handleDonate(item.id)}>
                   <Text style={styles.donateButtonText}>Donate</Text>
                 </TouchableOpacity>
               </View>
@@ -74,6 +98,9 @@ const DonationScreen = ({ navigation }) => {
         ))}
       </View>
     </ScrollView>
+
+    </SafeAreaView>
+    
   );
 };
 
@@ -126,3 +153,4 @@ const styles = StyleSheet.create({
 });
 
 export default DonationScreen;
+

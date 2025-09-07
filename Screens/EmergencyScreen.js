@@ -3,8 +3,12 @@ import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } fr
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import * as Location from 'expo-location';
-import { getAuth } from 'firebase/auth';
-import { firebase } from '../config';
+
+import * as Linking from 'expo-linking';
+
+import { firebase, getAuth } from '../config';
+
+
 
 const EmergencyScreen = () => {
   const navigation = useNavigation();

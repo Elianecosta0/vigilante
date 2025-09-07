@@ -3,12 +3,12 @@ import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { firebase } from '../config'; // Adjust the path to your Firebase config
-import { getAuth } from 'firebase/auth';
+
 
 export default function NotificationsScreen() {
   const navigation = useNavigation();
   const [notifications, setNotifications] = useState([]);
-  const currentUser = getAuth().currentUser;
+  const currentUser = firebase.auth().currentUser;
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
 
  useEffect(() => {

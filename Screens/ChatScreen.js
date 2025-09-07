@@ -1,192 +1,86 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  TextInput,
-  TouchableOpacity,
-  Text,
-  FlatList,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  SafeAreaView
-} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { firebase } from '../config';
-import { useRoute } from '@react-navigation/native';
 
 const ChatScreen = () => {
-  const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
-  const route = useRoute();
-  const { recipientId, recipientName } = route.params;
-  const currentUser = firebase.auth().currentUser;
-  const chatId = [currentUser.uid, recipientId].sort().join('_');
+  const [loading, setLoading] = useState(true);
+  const navigation = useNavigation();
+  const user = firebase.auth().currentUser;
 
   useEffect(() => {
+    if (!user) return;
+
+    // Listen for messages related to the user's posts
     const unsubscribe = firebase
       .firestore()
-      .collection('chats')
-      .doc(chatId)
       .collection('messages')
-      .orderBy('timestamp', 'asc')
+      .where('postOwnerId', '==', user.uid)
+      .orderBy('timestamp', 'desc')
       .onSnapshot(snapshot => {
-        const msgs = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+        const msgs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setMessages(msgs);
+        setLoading(false);
       });
 
-    return unsubscribe;
+    return () => unsubscribe();
   }, []);
 
-  const sendMessage = async () => {
-    if (message.trim() === '') return;
+  const renderItem = ({ item }) => (
+    <TouchableOpacity
+      style={styles.messageCard}
+      onPress={() => navigation.navigate('Comments', { postId: item.postId })}
+    >
+      <Text style={styles.sender}>{item.senderName}</Text>
+      <Text style={styles.postTitle}>{item.postTitle}</Text>
+      <Text numberOfLines={1} style={styles.messageText}>{item.message}</Text>
+      <Text style={styles.timestamp}>{new Date(item.timestamp?.toDate()).toLocaleString()}</Text>
+    </TouchableOpacity>
+  );
 
-    const userDoc = await firebase
-      .firestore()
-      .collection('users')
-      .doc(currentUser.uid)
-      .get();
-
-    const userName = userDoc.exists ? userDoc.data().name : 'Unknown';
-
-    const newMessage = {
-      text: message,
-      senderId: currentUser.uid,
-      recipientId,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-    };
-
-    await firebase
-      .firestore()
-      .collection('chats')
-      .doc(chatId)
-      .collection('messages')
-      .add(newMessage);
-
-    await firebase.firestore().collection('notifications').add({
-      type: 'message',
-      senderId: currentUser.uid,
-      senderName: userName,
-      recipientId: recipientId,
-      message: message,
-      chatId: chatId,
-      isRead: false,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-    });
-
-    setMessage('');
-  };
-
-  const renderMessage = ({ item }) => {
-    const isSender = item.senderId === currentUser.uid;
+  if (loading) {
     return (
-      <View
-        style={[
-          styles.messageBubble,
-          isSender ? styles.senderBubble : styles.receiverBubble,
-        ]}
-      >
-        <Text style={styles.messageText}>{item.text}</Text>
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#2f4156" />
       </View>
     );
-  };
+  }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={90}
-      >
+    <SafeAreaView style={styles.container}>
+      {messages.length === 0 ? (
+        <Text style={styles.noMessages}>No messages yet.</Text>
+      ) : (
         <FlatList
           data={messages}
-          keyExtractor={(item) => item.id}
-          renderItem={renderMessage}
-          contentContainerStyle={styles.chatContent}
+          keyExtractor={item => item.id}
+          renderItem={renderItem}
+          contentContainerStyle={{ padding: 15 }}
         />
-
-        <View style={styles.inputContainer}>
-          <TextInput
-            value={message}
-            onChangeText={setMessage}
-            placeholder="Type a message..."
-            placeholderTextColor="#aaa"
-            style={styles.input}
-          />
-          <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>
-            <Text style={styles.sendButtonText}>Send</Text>
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
+      )}
     </SafeAreaView>
   );
 };
 
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#fff' },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  noMessages: { textAlign: 'center', color: '#777', marginTop: 20 },
+  messageCard: {
+    backgroundColor: '#f9f9f9',
+    padding: 15,
+    borderRadius: 12,
+    marginBottom: 15,
+    elevation: 2,
+  },
+  sender: { fontWeight: '700', fontSize: 16, marginBottom: 2 },
+  postTitle: { fontWeight: '600', fontSize: 14, marginBottom: 4, color: '#2f4156' },
+  messageText: { fontSize: 14, color: '#555', marginBottom: 4 },
+  timestamp: { fontSize: 12, color: '#aaa', textAlign: 'right' },
+});
+
 export default ChatScreen;
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  container: {
-    flex: 1,
-  },
-  chatContent: {
-    padding: 12,
-    paddingBottom: 90,
-  },
-  messageBubble: {
-    padding: 12,
-    borderRadius: 18,
-    marginVertical: 4,
-    maxWidth: '75%',
-  },
-  senderBubble: {
-    backgroundColor: '#0078FF',
-    alignSelf: 'flex-end',
-  },
-  receiverBubble: {
-    backgroundColor: 'grey',
-    alignSelf: 'flex-start',
-  },
-  messageText: {
-    color: '#fff',
-    fontSize: 16,
-  },
-  inputContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    padding: 12,
-    borderTopWidth: 1,
-    borderColor: '#ddd',
-  },
-  input: {
-    flex: 1,
-    backgroundColor: '#f0f0f0',
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    borderRadius: 20,
-    fontSize: 16,
-    color: '#333',
-  },
-  sendButton: {
-    backgroundColor: '#0078FF',
-    borderRadius: 20,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    marginLeft: 8,
-    justifyContent: 'center',
-  },
-  sendButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 16,
-  },
-});
 
