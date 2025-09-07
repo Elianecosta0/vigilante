@@ -50,8 +50,10 @@
     "react-native-svg": "15.11.2",
     "react-native-toast-message": "^2.3.3",
     "react-native-uuid": "^2.0.3",
+
     "react-native-vector-icons": "^10.2.0",
     "react-native-webview": "^13.16.0"
+
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

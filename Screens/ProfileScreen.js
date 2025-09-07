@@ -23,17 +23,31 @@ const ProfileScreen = () => {
   const [loadingReports, setLoadingReports] = useState(true);
   
 
+
   const navigation = useNavigation();
   const auth = firebase.auth();
 
+  // Map Firestore fields to UI variables
+  const [fullname, setFullname] = useState('');
+  const [dob, setDob] = useState('');
+  const [gender, setGender] = useState('');
+  const [height, setHeight] = useState('');
+  const [weight, setWeight] = useState('');
+  const [feature, setFeature] = useState('');
+  const [emergencyContact, setEmergencyContact] = useState('');
+  const [contact, setContact] = useState('');
+
+
   // Fetch current user data
   useEffect(() => {
+
     const fetchUser = async () => {
       try {
         const user = auth.currentUser;
         if (user) {
           const doc = await firebase.firestore().collection('users').doc(user.uid).get();
           if (doc.exists) setUserData(doc.data());
+
         }
       } catch (err) {
         console.error('Error fetching user:', err);
@@ -102,21 +116,25 @@ const ProfileScreen = () => {
 
   const handleShare = async (poster) => {
     try {
+
       await Share.share({
         message: `🚨 Missing Person Alert 🚨\n\nName: ${poster.name}, Age: ${poster.age}\nLast seen: ${poster.lastSeen}\n\nDescription: ${poster.description}`,
         url: poster.imageUrl || '',
         title: 'Missing Person Poster'
       });
+
     } catch (error) {
       console.error('Error sharing:', error);
     }
   };
+
 
   const handleMessage = (poster) => {
     navigation.navigate('SendMessage', {
       recipientId: poster.postedBy,
       posterId: poster.id
     });
+
   };
 
   const renderPost = ({ item }) => (
@@ -151,9 +169,11 @@ const ProfileScreen = () => {
     </View>
   );
 
+
   if (!userData) return (
     <View style={styles.centered}><ActivityIndicator size="large" color="#2f4156" /></View>
   );
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -184,6 +204,7 @@ const ProfileScreen = () => {
   );
 };
 
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
@@ -204,4 +225,5 @@ const styles = StyleSheet.create({
 });
 
 export default ProfileScreen;
+
 
