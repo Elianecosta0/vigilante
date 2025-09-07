@@ -5,8 +5,8 @@ import { useNavigation } from '@react-navigation/native';
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import * as Linking from 'expo-linking';
-import { getAuth } from 'firebase/auth';
-import { firebase } from '../config';
+
+import { firebase, getAuth } from '../config';
 
 const EmergencyScreen = () => {
   const navigation = useNavigation();

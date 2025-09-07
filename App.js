@@ -5,6 +5,8 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { CartProvider } from './components/CartContext';
 import { RootSiblingParent } from 'react-native-root-siblings';
+import Toast from 'react-native-toast-message';
+
 
 import WelcomeScreen from './Screens/WelcomeScreen';
 import OnboardingScreen from './Screens/OnboardingScreen';
@@ -31,6 +33,10 @@ import MerchandiseScreen from './Screens/MerchandiseScreen';
 import ProductScreen from './Screens/ProductsScreen';
 import SettingsScreen from './Screens/SettingsScreen';
 import SelfDefenseScreen from './Screens/SelfDefenceScreen';
+import CommentsScreen from './Screens/CommentsScreen';
+import SendReportScreen from './Screens/SendMessageScreen';
+import ReportScreen from './Screens/ReportScreen';
+import MyReportsScreen from './Screens/MyReportsScreen';
 
 
 import TotalScreen from './Screens/TotalScreen';
@@ -38,6 +44,7 @@ import CardDetails from './Screens/CardDetails';
 import ConfirmationScreen from './Screens/ConfirmationScreen';
 import ThankyouScreen from './Screens/ThankyouScreen';
 import CartScreen from './Screens/CartScreen';
+import ContactProfessionalsScreen from './Screens/contact_professionals_screen';
 
 
 import ChatScreen from './Screens/ChatScreen';
@@ -136,37 +143,41 @@ export default function App() {
         <Stack.Screen name="LogIn" component={LogIn} />
         <Stack.Screen name="SignUp" component={SignUp} />
         <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
-        <Stack.Screen name="MoreInformation1" component={MoreInformation1} />
+        
 
         {/* Main app drawer */}
         <Stack.Screen name="AppDrawer" component={AppDrawer} />
 
         {/* Screens inside app flow but not part of tabs/drawer */}
-        <Stack.Screen name="AddPoster" component={AddPosterScreen} />
-        <Stack.Screen name="AddContact" component={AddEmergencyContactScreen} />
-        <Stack.Screen name="ViewContact" component={ViewContactScreen} />
-        <Stack.Screen name="MyDetails" component={MyDetails} />
-        <Stack.Screen name="SeeAll" component={SeeAll} />
-        <Stack.Screen name="Chatbot" component={ChatbotScreen} />
-        <Stack.Screen name="DonationDetails" component={DonationDetails} />
-         <Stack.Screen name="MissingPersonDetails" component={MissingPersonDetails} />
-        <Stack.Screen name="ChatScreen" component={ChatScreen} />
-           <Stack.Screen name="Product" component={ProductScreen} options={{ headerShown: false }} />
-           
-
-        <Stack.Screen name="CartScreen" component={CartScreen}  options={{ headerShown: false }} />
-        <Stack.Screen name="CardDetails" component={CardDetails} options={{ headerShown: false }} />
-        <Stack.Screen name="ThankyouScreen" component={ThankyouScreen} options={{ headerShown: false }} />
-        
-
-        <Stack.Screen name="ConfirmationScreen" component={ConfirmationScreen} options={{ headerShown: false}}/>
-         <Stack.Screen name="GroupChat" component={GroupChatScreen} options={{ headerShown: false}}/>
-          <Stack.Screen name="GroupDetail" component={GroupDetailScreen} options={{ headerShown: false}}/>
-
-          <Stack.Screen name="AlertScreen" component={AlertScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="ActiveAlertsScreen" component={ActiveAlertsScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="LiveLocationScreen" component={LiveLocationScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="RequestDetailsScreen" component={RequestDetailsScreen} options={{ headerShown: false }} />
+         <Stack.Screen name="MoreInformation1" component={MoreInformation1} />
+                <Stack.Screen name="AddPoster" component={AddPosterScreen} />
+                <Stack.Screen name="AddContact" component={AddEmergencyContactScreen} />
+                <Stack.Screen name="ViewContact" component={ViewContactScreen} />
+                <Stack.Screen name="MyDetails" component={MyDetails} />
+                <Stack.Screen name="SeeAll" component={SeeAll} />
+                <Stack.Screen name="Chatbot" component={ChatbotScreen} />
+                <Stack.Screen name="DonationDetails" component={DonationDetails} />
+                <Stack.Screen name="MissingPersonDetails" component={MissingPersonDetails} />
+                <Stack.Screen name="ChatScreen" component={ChatScreen} />
+                <Stack.Screen name="Product" component={ProductScreen} />
+                <Stack.Screen name="CartScreen" component={CartScreen} />
+                <Stack.Screen name="CardDetails" component={CardDetails} />
+                <Stack.Screen name="ThankyouScreen" component={ThankyouScreen} />
+                <Stack.Screen name="ConfirmationScreen" component={ConfirmationScreen} />
+                <Stack.Screen name="GroupChat" component={GroupChatScreen} />
+                <Stack.Screen name="GroupDetail" component={GroupDetailScreen} />
+                <Stack.Screen name="AlertScreen" component={AlertScreen} />
+                <Stack.Screen name="ActiveAlertsScreen" component={ActiveAlertsScreen} />
+                <Stack.Screen name="LiveLocationScreen" component={LiveLocationScreen} />
+                <Stack.Screen name="RequestDetailsScreen" component={RequestDetailsScreen} />
+                <Stack.Screen name="Comments" component={CommentsScreen} />
+                <Stack.Screen name="SendMessage" component={SendReportScreen} />
+                <Stack.Screen name="ReportScreen" component={ReportScreen} />
+                 <Stack.Screen name="MyReportsScreen" component={MyReportsScreen} />
+                  <Stack.Screen 
+    name="ContactProfessionals" 
+    component={ContactProfessionalsScreen} 
+    options={{ headerShown: false }} />
 
 
       </Stack.Navigator>

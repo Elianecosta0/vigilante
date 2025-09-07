@@ -4,36 +4,32 @@ import {
   Text,
   FlatList,
   StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
   SafeAreaView,
 } from 'react-native';
-
-import { db } from '../config';
-import { doc, getDoc } from 'firebase/firestore';
+import { firebase } from '../config'; // compat style
 
 export default function GroupDetailScreen({ route }) {
   const { groupId, groupName } = route.params;
   const [memberNames, setMemberNames] = useState([]);
 
+  const db = firebase.firestore();
+
   useEffect(() => {
     async function fetchMembers() {
-      const groupRef = doc(db, 'groups', groupId);
-      const groupSnap = await getDoc(groupRef);
-      if (!groupSnap.exists()) return;
+      const groupRef = db.collection('groups').doc(groupId);
+      const groupSnap = await groupRef.get();
+      if (!groupSnap.exists) return;
 
       const memberIds = groupSnap.data().members || [];
 
       // Fetch user profiles for each memberId
-      const memberPromises = memberIds.map(async (uid) => {
-        const userRef = doc(db, 'users', uid);
-        const userSnap = await getDoc(userRef);
-       if (userSnap.exists()) {
-  const data = userSnap.data();
-  console.log('User data:', data); // Debug
-  return data.name;
-}
-
+      const memberPromises = memberIds.map(async uid => {
+        const userSnap = await db.collection('users').doc(uid).get();
+        if (userSnap.exists) {
+          const data = userSnap.data();
+          console.log('User data:', data); // Debug
+          return data.name || uid;
+        }
         return uid; // fallback
       });
 

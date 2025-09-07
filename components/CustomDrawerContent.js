@@ -32,6 +32,7 @@ const CustomDrawerContent = ({ navigation }) => {
       <MenuItem icon="card-outline" label="Donations" onPress={() => navigation.navigate('Donations')} />
       <MenuItem icon="shirt-outline" label="Merchandise" onPress={() => navigation.navigate('Merchandise')} />
       <MenuItem icon="call" label="Emergency Contacts" onPress={() => navigation.navigate('ViewContact')} />
+       <MenuItem icon="call" label="Contact Professionals" onPress={() => navigation.navigate('ContactProfessionals')} />
       <MenuItem icon="settings-outline" label="Settings" onPress={() => navigation.navigate('Settings')} />
     </DrawerContentScrollView>
   );

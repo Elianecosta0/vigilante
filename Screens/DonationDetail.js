@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   Image,
   StyleSheet,
   TouchableOpacity,
-  ScrollView
+  ScrollView,
+  Alert,
+  SafeAreaView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions } from '@react-navigation/native';
@@ -13,15 +15,30 @@ import { DrawerActions } from '@react-navigation/native';
 const DonationDetails = ({ route, navigation }) => {
   const { donation } = route.params;
 
+  const [raised, setRaised] = useState(donation.raised);
+  const [donors, setDonors] = useState(donation.donors);
+  const [progress, setProgress] = useState(donation.progress);
+
+  const handleDonate = () => {
+    const newRaised = raised + 100; // simulate $100 donation
+    const newDonors = donors + 1;
+    const newProgress = Math.min(newRaised / donation.target, 1);
+
+    setRaised(newRaised);
+    setDonors(newDonors);
+    setProgress(newProgress);
+
+    Alert.alert("🎉 Thank you!", "Your $100 donation has been added (simulation only).");
+  };
+
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Header with Drawer Icon */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}>
-          <Ionicons name="menu" size={26} color="#333" />
-        </TouchableOpacity>
+       
         <Text style={styles.headerTitle}>Donation Details</Text>
-        <View style={{ width: 26 }} /> {/* Spacer */}
+        <View style={{ width: 26 }} /> 
+        {/* Spacer */}
       </View>
 
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
@@ -36,32 +53,33 @@ const DonationDetails = ({ route, navigation }) => {
           {/* Progress Bar */}
           <View style={styles.progressContainer}>
             <View style={styles.progressBar}>
-              <View style={[styles.progressFill, { width: `${donation.progress * 100}%` }]} />
+              <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
             </View>
             <View style={styles.progressTextContainer}>
-              <Text style={styles.progressText}>Raised: {donation.raised}</Text>
-              <Text style={styles.progressText}>Goal: {donation.target}</Text>
+              <Text style={styles.progressText}>Raised: ${raised.toLocaleString()}</Text>
+              <Text style={styles.progressText}>Goal: ${donation.target.toLocaleString()}</Text>
             </View>
           </View>
 
           {/* Donor Count */}
-          <Text style={styles.donorCount}>{donation.donors}</Text>
+          <Text style={styles.donorCount}>{donors.toLocaleString()} donors</Text>
 
-          {/* Extra Description (like Figma) */}
+          {/* Extra Description */}
           <View style={styles.extraDescriptionContainer}>
             <Text style={styles.extraDescriptionTitle}>Description</Text>
             <Text style={styles.extraDescriptionText}>
-              Your contribution helps us provide vital resources to those in need. Every donation counts in creating a safe and supportive community.Your donation provides urgent support to those affected by gender-based violence — including access to safe shelter, medical care, counseling, legal protection, and trauma recovery services. Every contribution helps restore hope, healing, and a path toward independence.
+              Your contribution helps us provide vital resources to those in need. Every donation counts in creating a safe and supportive community. 
+              Your donation provides urgent support to those affected by gender-based violence — including access to safe shelter, medical care, counseling, legal protection, and trauma recovery services.
             </Text>
           </View>
         </View>
       </ScrollView>
 
       {/* Donate Button at Bottom */}
-      <TouchableOpacity style={styles.donateButton}>
+      <TouchableOpacity style={styles.donateButton} onPress={handleDonate}>
         <Text style={styles.donateButtonText}>Donate Now</Text>
       </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -120,3 +138,4 @@ const styles = StyleSheet.create({
 });
 
 export default DonationDetails;
+

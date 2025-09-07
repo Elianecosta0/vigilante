@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, TextInput } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, TextInput , SafeAreaView} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions } from '@react-navigation/native';
 
@@ -46,7 +46,7 @@ const SelfDefenceScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Text style={styles.headerTitle}>Self-Defense Courses</Text>
 
       {/* Drawer and Search */}
@@ -107,7 +107,7 @@ const SelfDefenceScreen = ({ navigation }) => {
           </View>
         )}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 

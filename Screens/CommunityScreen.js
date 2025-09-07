@@ -11,11 +11,15 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { collection, query, onSnapshot, addDoc, updateDoc, doc, where, serverTimestamp } from 'firebase/firestore';
-import { db, auth } from '../config';
+import { firebase } from '../config'; // compat style
 
 export default function CommunityScreen() {
   const navigation = useNavigation();
+
+  // Firebase references
+  const db = firebase.firestore();
+  const auth = firebase.auth();
+
   const [groups, setGroups] = useState([]);
   const [joinedGroupIds, setJoinedGroupIds] = useState(new Set());
 
@@ -25,17 +29,29 @@ export default function CommunityScreen() {
 
   // Fetch all groups live
   useEffect(() => {
-    const q = query(collection(db, 'groups'));
-    const unsubscribe = onSnapshot(q, snapshot => {
-      const allGroups = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setGroups(allGroups);
+    const unsubscribe = db
+      .collection('groups')
+      .orderBy('createdAt', 'desc')
+      .onSnapshot(
+        snapshot => {
+          const allGroups = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+            members: doc.data().members || [], // ensure members array exists
+          }));
+          setGroups(allGroups);
 
-      // Track which groups current user belongs to
-      const joined = allGroups
-        .filter(g => g.members?.includes(auth.currentUser.uid))
-        .map(g => g.id);
-      setJoinedGroupIds(new Set(joined));
-    });
+          // Track which groups current user belongs to
+          const joined = allGroups
+            .filter(g => g.members.includes(auth.currentUser.uid))
+            .map(g => g.id);
+          setJoinedGroupIds(new Set(joined));
+        },
+        error => {
+          console.error('Error fetching groups:', error);
+        }
+      );
+
     return () => unsubscribe();
   }, []);
 
@@ -45,19 +61,25 @@ export default function CommunityScreen() {
       Alert.alert('Please enter a group name');
       return;
     }
+
     try {
       // Check if group with same name exists
-      if (groups.some(g => g.name.toLowerCase() === newGroupName.trim().toLowerCase())) {
+      if (
+        groups.some(
+          g => g.name.toLowerCase() === newGroupName.trim().toLowerCase()
+        )
+      ) {
         Alert.alert('Group with this name already exists');
         return;
       }
 
-      await addDoc(collection(db, 'groups'), {
+      await db.collection('groups').add({
         name: newGroupName.trim(),
         members: [auth.currentUser.uid],
-        createdAt: serverTimestamp(),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         createdBy: auth.currentUser.uid,
       });
+
       Alert.alert(`Group "${newGroupName}" created!`);
       setNewGroupName('');
       setCreateModalVisible(false);
@@ -67,15 +89,15 @@ export default function CommunityScreen() {
   };
 
   // Join existing group handler
-  const handleJoinGroup = async (group) => {
+  const handleJoinGroup = async group => {
     if (joinedGroupIds.has(group.id)) {
       Alert.alert('You are already a member of this group');
       return;
     }
     try {
-      const groupRef = doc(db, 'groups', group.id);
-      await updateDoc(groupRef, {
-        members: [...group.members, auth.currentUser.uid],
+      const groupRef = db.collection('groups').doc(group.id);
+      await groupRef.update({
+        members: [...(group.members || []), auth.currentUser.uid],
       });
       Alert.alert(`You joined "${group.name}"`);
       setJoinModalVisible(false);
@@ -90,7 +112,12 @@ export default function CommunityScreen() {
     return (
       <TouchableOpacity
         style={[styles.groupItem, isJoined && styles.joinedGroup]}
-        onPress={() => navigation.navigate('GroupChat', { groupId: item.id, groupName: item.name })}
+        onPress={() =>
+          navigation.navigate('GroupChat', {
+            groupId: item.id,
+            groupName: item.name,
+          })
+        }
       >
         <Text style={styles.groupName}>{item.name}</Text>
         {isJoined && <Text style={styles.joinedBadge}>Joined</Text>}
@@ -98,7 +125,7 @@ export default function CommunityScreen() {
     );
   };
 
-  // List of groups user can join (not joined)
+  // Groups available to join
   const availableToJoin = groups.filter(g => !joinedGroupIds.has(g.id));
 
   return (

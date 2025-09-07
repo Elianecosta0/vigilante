@@ -16,6 +16,8 @@ const MissingPersonDetails = ({ route }) => {
 };
  */
 
+
+
 const handleMessage = () => {
   navigation.navigate('ChatScreen', {
    recipientId: postedByUid,
