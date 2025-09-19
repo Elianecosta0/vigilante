@@ -80,10 +80,7 @@ const LogIn = () => {
         return;
       }
 
-      if (!userCredential.user.emailVerified) {
-        alert('Please verify your email before logging in.');
-        return;
-      }
+      
 
       if (!userData.phone) {
         alert('No phone number registered for 2FA.');

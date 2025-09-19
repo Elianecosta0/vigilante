@@ -174,11 +174,7 @@ const HomeScreen = () => {
       {/* Post Actions */}
       <View style={styles.postActions}>
         <View style={styles.leftActions}>
-          <TouchableOpacity onPress={handleLike}>
-            <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-              <Ionicons name={liked ? 'heart' : 'heart-outline'} size={28} color={liked ? 'red' : '#000'} style={{ marginRight: 15 }} />
-            </Animated.View>
-          </TouchableOpacity>
+         
 
           <TouchableOpacity onPress={() => navigation.navigate('Comments', { posterId: poster.id })}>
             <Ionicons name="chatbubble-outline" size={28} color="#000" style={{ marginRight: 15 }} />
@@ -200,7 +196,7 @@ const HomeScreen = () => {
       </View>
 
       {/* Post Details */}
-      <Text style={styles.likes}>{poster.likes?.length || 0} likes</Text>
+     
       <Text style={styles.description}>
         <Text style={styles.username}>{poster.name || 'Unknown'} </Text>
         {poster.description}
