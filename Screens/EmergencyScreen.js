@@ -2,13 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
-
-import * as Linking from 'expo-linking';
-
-import { firebase, getAuth } from '../config';
-
-
+import { getAuth } from 'firebase/auth';
+import { firebase } from '../config';
 
 const EmergencyScreen = () => {
   const navigation = useNavigation();
@@ -55,11 +52,11 @@ const EmergencyScreen = () => {
       longitude: currentLocation.coords.longitude,
     });
 
-    fetchAddress(currentLocation.coords.latitude, currentLocation.coords.longitude);
-
+    const resolvedAddress = await fetchAddress(currentLocation.coords.latitude, currentLocation.coords.longitude);
     return {
       latitude: currentLocation.coords.latitude,
       longitude: currentLocation.coords.longitude,
+      address: resolvedAddress,
     };
   };
 
@@ -71,28 +68,44 @@ const EmergencyScreen = () => {
       let json = await response.json();
       if (json.results && json.results.length > 0) {
         setAddress(json.results[0].formatted_address);
+        return json.results[0].formatted_address;
       } else {
         setAddress(null);
+        return null;
       }
     } catch (error) {
       console.error(error);
       setAddress(null);
+      return null;
     }
   };
 
   const handleEmergency = async () => {
     setLoading(true);
 
-    const loc = await fetchLocationFast();
+    const locData = await fetchLocationFast(); // now includes address
 
     setLoading(false);
 
-    if (!loc) {
+    if (!locData) {
       Alert.alert('Error', 'Could not get location.');
       return;
     }
 
     const userId = getAuth().currentUser.uid;
+
+    // Fetch emergency contacts
+    let contacts = [];
+    try {
+      const snapshot = await firebase.firestore()
+        .collection('emergencyContacts')
+        .where('userId', '==', userId)
+        .get();
+      contacts = snapshot.docs.map(doc => doc.data());
+    } catch (error) {
+      Alert.alert('Failed to fetch contacts', error.message);
+      return;
+    }
 
     // Add alert to ActiveAlerts collection in Firestore
     try {
@@ -105,12 +118,12 @@ const EmergencyScreen = () => {
 
       const alertData = {
         userId,
-        name: userData.fullname || '',
+        name: userData.name || '',
         phone: userData.emergencyContact || '',
         identifyingFeature: userData.feature || '',
-        photoURL: userData.profileImage || '', // use profileImage field
-        location: new firebase.firestore.GeoPoint(loc.latitude, loc.longitude),
-        address: address || '', // save resolved address
+        photoURL: userData.profileImage || '',
+        location: new firebase.firestore.GeoPoint(locData.latitude, locData.longitude),
+        address: locData.address || '',
         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
         status: 'active',
       };
@@ -119,20 +132,15 @@ const EmergencyScreen = () => {
     } catch (error) {
       console.error('Error adding alert to Firestore:', error);
       Alert.alert('Error', 'Failed to save alert to database.');
+      return;
     }
 
-    Alert.alert('Emergency Alert Sent', 'Your emergency contacts and police have been notified.');
     setAlertSent(true);
+    Alert.alert('Emergency Alert Sent', 'Your emergency alert has been sent successfully.');
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.openDrawer()}>
-          <Ionicons name="menu" size={30} color="#000" />
-        </TouchableOpacity>
-      </View>
-
       {loading && <ActivityIndicator size="large" color="red" style={{ marginTop: 40 }} />}
 
       {!alertSent && !isCounting && (
@@ -165,7 +173,6 @@ export default EmergencyScreen;
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  header: { position: 'absolute', top: 50, left: 20, flexDirection: 'row', alignItems: 'center', zIndex: 2 },
   info: { textAlign: 'center', marginBottom: 20, fontSize: 14, color: '#444', marginTop: 100 },
   emergencyButton: { width: 250, height: 250, borderRadius: 125, backgroundColor: 'red', alignItems: 'center', justifyContent: 'center', alignSelf: 'center', marginTop: 40 },
   emergencyText: { color: 'white', fontSize: 28, fontWeight: 'bold' },
@@ -175,9 +182,3 @@ const styles = StyleSheet.create({
   cancelText: { color: 'red', fontSize: 22, fontWeight: '600' },
   note: { marginTop: 40, fontSize: 12, color: '#555', textAlign: 'center' },
 });
-
-
-
-
-
-
