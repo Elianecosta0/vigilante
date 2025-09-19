@@ -57,11 +57,12 @@ export default function CommunityScreen() {
 
   // Filter users by search query
   useEffect(() => {
-    const results = users.filter(u =>
-      u.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    setSearchResults(results);
-  }, [searchQuery, users]);
+  const results = users.filter(u => {
+    if (!u.name) return false; // skip users without a name
+    return u.name.toLowerCase().includes(searchQuery.toLowerCase());
+  });
+  setSearchResults(results);
+}, [searchQuery, users]);
 
   // Fetch active private chats (most recent first)
   useEffect(() => {
