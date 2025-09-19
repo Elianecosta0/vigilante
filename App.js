@@ -19,6 +19,7 @@ import MoreInformation1 from './Screens/MoreInformation1';
 import AddEmergencyContactScreen from './Screens/AddEmergContact';
 import ViewContactScreen from './Screens/ViewContactScreen';
 import MissingPersonDetails from './Screens/MissingPersonDetails';
+import PrivateChatScreen from './Screens/PrivateChatScreen';
 
 
 import HomeScreen from './Screens/HomeScreen';
@@ -61,6 +62,7 @@ import AlertScreen from './Screens/AlertScreen';
 import ActiveAlertsScreen from './Screens/ActiveAlertsScreen';
 import LiveLocationScreen from './Screens/LiveLocationScreen';
 import RequestDetailsScreen from './Screens/RequestDetailsScreen';
+import UserProfileScreen from './Screens/UserProfileScreen';
 
 import { firebase } from './config';
 import { useEffect, useState } from 'react';
@@ -174,6 +176,9 @@ export default function App() {
                 <Stack.Screen name="SendMessage" component={SendReportScreen} />
                 <Stack.Screen name="ReportScreen" component={ReportScreen} />
                  <Stack.Screen name="MyReportsScreen" component={MyReportsScreen} />
+                 <Stack.Screen name="PrivateChat" component={PrivateChatScreen} />
+                 <Stack.Screen name="UserProfile" component={UserProfileScreen} />
+
                   <Stack.Screen 
     name="ContactProfessionals" 
     component={ContactProfessionalsScreen} 

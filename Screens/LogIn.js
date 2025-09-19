@@ -13,10 +13,14 @@ import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { firebase } from '../config';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { getAuth, PhoneAuthProvider, signInWithCredential } from 'firebase/auth';
+
+// Expo Firebase Recaptcha
 import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
 
 const LogIn = () => {
   const navigation = useNavigation();
+  const auth = getAuth();
 
   const [role, setRole] = useState('');
   const [email, setEmail] = useState('');
@@ -31,8 +35,9 @@ const LogIn = () => {
   const [verificationCode, setVerificationCode] = useState('');
   const [is2FA, setIs2FA] = useState(false);
   const [resendTimer, setResendTimer] = useState(30);
-  const recaptchaVerifier = useRef(null);
   const timerRef = useRef(null);
+
+  const recaptchaVerifier = useRef(null);
 
   const togglePasswordVisibility = () => setSecureEntry(!secureEntry);
   const handleSignup = () => navigation.navigate('SignUp');
@@ -103,56 +108,45 @@ const LogIn = () => {
   // Step 2: Send 2FA SMS
   const send2FACode = async (phoneNumber) => {
     try {
-      const phoneProvider = new firebase.auth.PhoneAuthProvider();
+      const phoneProvider = new PhoneAuthProvider(auth);
       const id = await phoneProvider.verifyPhoneNumber(phoneNumber, recaptchaVerifier.current);
       setVerificationId(id);
       startTimer();
       Alert.alert('Verification code sent', `Code sent to ${phoneNumber}`);
     } catch (error) {
-      alert('Failed to send verification code.');
-      console.log(error);
+      console.log('2FA send error:', error);
+      Alert.alert('Failed to send verification code', error.message);
     }
   };
 
   // Step 3: Verify 2FA code
   const verify2FACode = async () => {
+    if (!verificationId) {
+      Alert.alert('Error', 'Verification ID is missing. Please resend the code.');
+      return;
+    }
+
     try {
-      const credential = firebase.auth.PhoneAuthProvider.credential(
-        verificationId,
-        verificationCode
-      );
-
-      const currentUser = firebase.auth().currentUser;
-
-      if (currentUser.phoneNumber) {
-        // Already linked -> sign in
-        await currentUser.linkWithCredential(credential).catch(async err => {
-          if (err.code === 'auth/provider-already-linked') {
-            // Phone already linked, just continue
-            if (role === 'user') navigation.replace('AppDrawer');
-            else if (role === 'authority') navigation.replace('ActiveAlertsScreen');
-          } else throw err;
-        });
-      } else {
-        // Link phone
-        await currentUser.linkWithCredential(credential);
-      }
+      const credential = PhoneAuthProvider.credential(verificationId, verificationCode);
+      await signInWithCredential(auth, credential);
 
       if (role === 'user') navigation.replace('AppDrawer');
       else if (role === 'authority') navigation.replace('ActiveAlertsScreen');
 
     } catch (error) {
-      console.log('2FA error:', error);
+      console.log('2FA verify error:', error);
       Alert.alert('Error', error.message.includes('verification code') ? 'Invalid verification code. Try again.' : error.message);
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Firebase Recaptcha */}
       <FirebaseRecaptchaVerifierModal
         ref={recaptchaVerifier}
         firebaseConfig={firebase.app().options}
       />
+
       <ScrollView contentContainerStyle={{ padding: 20 }}>
         <View style={styles.logoContainer}>
           <Image source={require('../assets/vigilante-logo.png')} style={styles.image} resizeMode="contain" />
@@ -218,113 +212,22 @@ const LogIn = () => {
 
 export default LogIn;
 
-
+// Styles remain the same as your original code
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: 30,
-    backgroundColor: '#fff',
-  },
-  logoContainer: {
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  image: {
-    width: 350,
-    height: 350,
-    marginBottom: -100,
-  },
-  txt: {
-    width: 300,
-    height: 50,
-  },
-  inputGroup: {
-    marginBottom: 15,
-  },
-  label: {
-    fontSize: 14,
-    color: '#555555',
-    marginBottom: 5,
-    fontWeight: '600',
-  },
-  input: {
-    height: 50,
-    borderColor: '#DADADA',
-    backgroundColor: '#F7F8F9',
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  passwordInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  errorText: {
-    color: 'red',
-    fontSize: 12,
-    marginTop: 3,
-  },
-  button: {
-    backgroundColor: '#1E2C3A',
-    paddingVertical: 15,
-    borderRadius: 8,
-    marginBottom: 15,
-  },
-  buttonText: {
-    color: '#fff',
-    textAlign: 'center',
-    fontWeight: 'bold',
-  },
-  forgotPassword: {
-    color: '#1E2C3A',
-    textAlign: 'right',
-    marginBottom: 15,
-  },
-  linkText: {
-    color: '#1E2C3A',
-    textAlign: 'center',
-  },
-  roleContainer: {
-    flexDirection: 'row',
-    marginBottom: 20,
-  },
-  roleButton: {
-    flex: 1,
-    backgroundColor: '#DADADA',
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginHorizontal: 5,
-    alignItems: 'center',
-  },
-  selectedRole: {
-    backgroundColor: '#1E2C3A',
-  },
-  roleText: {
-    fontWeight: 'bold',
-    color: '#1E2C3A',
-  },
+  container: { flex: 1, paddingHorizontal: 30, backgroundColor: '#fff' },
+  logoContainer: { alignItems: 'center', marginTop: 20 },
+  image: { width: 350, height: 350, marginBottom: -100 },
+  txt: { width: 300, height: 50 },
+  label: { fontSize: 14, color: '#555555', marginBottom: 5, fontWeight: '600' },
+  input: { height: 50, borderColor: '#DADADA', backgroundColor: '#F7F8F9', borderWidth: 1, borderRadius: 8, paddingHorizontal: 15, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 },
+  passwordInputContainer: { flexDirection: 'row', alignItems: 'center' },
+  errorText: { color: 'red', fontSize: 12, marginTop: 3 },
+  button: { backgroundColor: '#1E2C3A', paddingVertical: 15, borderRadius: 8, marginBottom: 15 },
+  buttonText: { color: '#fff', textAlign: 'center', fontWeight: 'bold' },
+  forgotPassword: { color: '#1E2C3A', textAlign: 'right', marginBottom: 15 },
+  linkText: { color: '#1E2C3A', textAlign: 'center' },
+  roleContainer: { flexDirection: 'row', marginBottom: 20 },
+  roleButton: { flex: 1, backgroundColor: '#DADADA', paddingVertical: 12, borderRadius: 8, marginHorizontal: 5, alignItems: 'center' },
+  selectedRole: { backgroundColor: '#1E2C3A' },
+  roleText: { fontWeight: 'bold', color: '#1E2C3A' },
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
