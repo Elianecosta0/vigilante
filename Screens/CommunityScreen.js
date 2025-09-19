@@ -1,3 +1,4 @@
+// Safe CommunityScreen.js
 import React, { useEffect, useState } from 'react';
 import {
   SafeAreaView,
@@ -55,15 +56,15 @@ export default function CommunityScreen() {
     return () => unsubscribe();
   }, []);
 
-  // Filter users by search query
+  // Filter users by search query safely
   useEffect(() => {
     const results = users.filter(u =>
-      u.name.toLowerCase().includes(searchQuery.toLowerCase())
+      (u.name || '').toLowerCase().includes((searchQuery || '').toLowerCase())
     );
     setSearchResults(results);
   }, [searchQuery, users]);
 
-  // Fetch active private chats (most recent first)
+  // Fetch active private chats
   useEffect(() => {
     const unsubscribe = db.collection('privateChats')
       .where('participants', 'array-contains', currentUser.uid)
@@ -76,13 +77,13 @@ export default function CommunityScreen() {
   }, []);
 
   const handleStartPrivateChat = user => {
-    navigation.navigate('PrivateChat', { userId: user.id, userName: user.name });
+    navigation.navigate('PrivateChat', { userId: user.id, userName: user.name || 'User' });
   };
 
   const renderPrivateChat = ({ item }) => {
     const otherUserId = item.participants.find(uid => uid !== currentUser.uid);
     const otherUser = users.find(u => u.id === otherUserId);
-    const otherUserName = otherUser ? otherUser.name : 'User';
+    const otherUserName = otherUser?.name || 'User';
 
     return (
       <TouchableOpacity
@@ -135,7 +136,7 @@ export default function CommunityScreen() {
               style={styles.groupItem}
               onPress={() => handleStartPrivateChat(item)}
             >
-              <Text style={styles.groupName}>{item.name}</Text>
+              <Text style={styles.groupName}>{item.name || 'User'}</Text>
             </TouchableOpacity>
           )}
         />
@@ -148,10 +149,10 @@ export default function CommunityScreen() {
               <TouchableOpacity
                 style={[styles.groupItem, joinedGroupIds.has(item.id) && styles.joinedGroup]}
                 onPress={() =>
-                  navigation.navigate('GroupChat', { groupId: item.id, groupName: item.name })
+                  navigation.navigate('GroupChat', { groupId: item.id, groupName: item.name || 'Group' })
                 }
               >
-                <Text style={styles.groupName}>{item.name}</Text>
+                <Text style={styles.groupName}>{item.name || 'Group'}</Text>
                 {joinedGroupIds.has(item.id) && <Text style={styles.joinedBadge}>Joined</Text>}
               </TouchableOpacity>
             )
