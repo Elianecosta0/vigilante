@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
   meta: { fontSize: 13, color: '#999' },
   menuButton: { padding: 8 },
   subscribeButton: {
-    backgroundColor: '#FF6B6B',
+    backgroundColor: '#2f4156',
     borderRadius: 20,
     paddingVertical: 10,
     alignItems: 'center',
