@@ -5,6 +5,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { firebase } from '../config';
 import * as Location from 'expo-location';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const ActiveAlertsScreen = ({ navigation }) => {
   const [alerts, setAlerts] = useState([]);
@@ -102,7 +103,7 @@ const ActiveAlertsScreen = ({ navigation }) => {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#001f3f" barStyle="light-content" />
 
       <View style={styles.headerBar}>
@@ -115,7 +116,7 @@ const ActiveAlertsScreen = ({ navigation }) => {
         renderItem={renderItem}
         contentContainerStyle={styles.listContent}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 

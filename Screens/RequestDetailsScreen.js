@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { firebase } from '../config';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const RequestDetailsScreen = ({ route }) => {
   const navigation = useNavigation();
@@ -30,7 +31,7 @@ const RequestDetailsScreen = ({ route }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Image
         source={{
           uri: alertData.photoURL || 'https://thumbs.dreamstime.com/b/portrait-happy-female-generation-z-person-profile-picture-head-shot-beautiful-positive-young-woman-having-attractive-appearance-328069168.jpg',
@@ -46,7 +47,7 @@ const RequestDetailsScreen = ({ route }) => {
       <TouchableOpacity style={styles.respondButton} onPress={handleRespond}>
         <Text style={styles.respondText}>Respond</Text>
       </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 };
 

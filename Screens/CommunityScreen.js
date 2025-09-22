@@ -58,11 +58,20 @@ export default function CommunityScreen() {
 
   // Filter users by search query safely
   useEffect(() => {
+<<<<<<< HEAD
     const results = users.filter(u =>
       (u.name || '').toLowerCase().includes((searchQuery || '').toLowerCase())
     );
     setSearchResults(results);
   }, [searchQuery, users]);
+=======
+  const results = users.filter(u => {
+    if (!u.name) return false; // skip users without a name
+    return u.name.toLowerCase().includes(searchQuery.toLowerCase());
+  });
+  setSearchResults(results);
+}, [searchQuery, users]);
+>>>>>>> 822474aeb1736e4c29e5265dfde998395bf2ecc4
 
   // Fetch active private chats
   useEffect(() => {
