@@ -6,12 +6,16 @@ import {
   Image,
   StyleSheet,
   ActivityIndicator,
+  TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { firebase } from '../config';
+import { useNavigation } from '@react-navigation/native';
 
 export default function UserProfile({ route }) {
   const { userId } = route.params;
+  const navigation = useNavigation();
   const db = firebase.firestore();
 
   const [user, setUser] = useState(null);
@@ -22,7 +26,7 @@ export default function UserProfile({ route }) {
   useEffect(() => {
     const unsubscribe = db.collection('users').doc(userId).onSnapshot(doc => {
       if (doc.exists) {
-        setUser(doc.data()); // profilePicture, name, bio, etc.
+        setUser(doc.data());
       }
     });
     return () => unsubscribe();
@@ -33,7 +37,7 @@ export default function UserProfile({ route }) {
     const unsubscribe = db
       .collection('posts')
       .where('userId', '==', userId)
-      .orderBy('createdAt', 'desc') // newest first
+      .orderBy('createdAt', 'desc')
       .onSnapshot(
         snapshot => {
           const userPosts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -48,30 +52,46 @@ export default function UserProfile({ route }) {
     return () => unsubscribe();
   }, [userId]);
 
+  const handleMessageUser = () => {
+    navigation.navigate('PrivateChat', { userId, userName: user?.name || 'User' });
+  };
+
+  const openPost = (post) => {
+    Alert.alert('Post Clicked', 'You can navigate to a detailed post screen here.');
+  };
+
   if (!user) {
     return (
       <SafeAreaView style={styles.container}>
-        <ActivityIndicator size="large" color="#9c27b0" />
+        <ActivityIndicator size="large" color="#4a148c" />
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
+      {/* Header with profile info */}
       <View style={styles.header}>
         {user.profilePicture ? (
           <Image source={{ uri: user.profilePicture }} style={styles.profileImage} />
         ) : (
           <View style={[styles.profileImage, { backgroundColor: '#ccc' }]} />
         )}
-        <Text style={styles.userName}>{user.name}</Text>
+        <View style={{ flex: 1, marginLeft: 15 }}>
+          <Text style={styles.userName}>{user.name}</Text>
+          {user.bio ? <Text style={styles.bio}>{user.bio}</Text> : null}
+          <View style={styles.buttonsRow}>
+            <TouchableOpacity
+              style={[styles.button, styles.messageButton]}
+              onPress={handleMessageUser}
+            >
+              <Text style={styles.buttonText}>Message</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
 
-      {/* Bio */}
-      {user.bio ? <Text style={styles.bio}>{user.bio}</Text> : null}
-
-      {/* Posts */}
+      {/* Posts Grid */}
       {loading ? (
         <ActivityIndicator size="large" color="#9c27b0" style={{ marginTop: 20 }} />
       ) : posts.length === 0 ? (
@@ -79,11 +99,13 @@ export default function UserProfile({ route }) {
       ) : (
         <FlatList
           data={posts}
-          keyExtractor={item => item.id}
+          keyExtractor={(item) => item.id}
           numColumns={3}
           contentContainerStyle={styles.postsContainer}
           renderItem={({ item }) => (
-            <Image source={{ uri: item.image }} style={styles.postImage} />
+            <TouchableOpacity onPress={() => openPost(item)}>
+              <Image source={{ uri: item.image }} style={styles.postImage} />
+            </TouchableOpacity>
           )}
         />
       )}
@@ -95,20 +117,23 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f7f0fa' },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     padding: 15,
+    backgroundColor: 'white',
     borderBottomWidth: 1,
     borderColor: '#ddd',
-    backgroundColor: 'white',
   },
-  profileImage: { width: 60, height: 60, borderRadius: 30, marginRight: 15 },
-  userName: { fontSize: 20, fontWeight: '700', color: '#4a148c' },
-  bio: {
+  profileImage: { width: 80, height: 80, borderRadius: 40 },
+  userName: { fontSize: 22, fontWeight: '700', color: '#4a148c' },
+  bio: { fontSize: 16, color: '#6a1b9a', marginTop: 5 },
+  buttonsRow: { flexDirection: 'row', marginTop: 10 },
+  button: {
+    paddingVertical: 6,
     paddingHorizontal: 15,
-    marginTop: 10,
-    fontSize: 16,
-    color: '#6a1b9a',
+    borderRadius: 20,
+    marginRight: 10,
   },
+  messageButton: { backgroundColor: '#4a6fa5' },
+  buttonText: { color: 'white', fontWeight: '600' },
   noPostsText: { textAlign: 'center', marginTop: 30, color: '#888', fontSize: 16 },
   postsContainer: { padding: 5 },
   postImage: {
