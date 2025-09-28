@@ -1,20 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  ActivityIndicator,
+  FlatList,
+  Button,
+} from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { getAuth } from 'firebase/auth';
 import { firebase } from '../config';
+import { Audio } from 'expo-av';
 
 const EmergencyScreen = () => {
-  const navigation = useNavigation();
   const [countdown, setCountdown] = useState(null);
   const [isCounting, setIsCounting] = useState(false);
   const [location, setLocation] = useState(null);
-  const [address, setAddress] = useState(null);
   const [loading, setLoading] = useState(false);
   const [alertSent, setAlertSent] = useState(false);
+  const [mapVisible, setMapVisible] = useState(false);
+  const [recording, setRecording] = useState(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingsList, setRecordingsList] = useState([]);
 
   useEffect(() => {
     let timer;
@@ -27,10 +37,17 @@ const EmergencyScreen = () => {
     return () => clearTimeout(timer);
   }, [countdown, isCounting]);
 
+  useEffect(() => {
+    // Subscribe to Firestore recordings in real-time
+    const unsubscribe = subscribeToRecordings();
+    return () => unsubscribe();
+  }, []);
+
   const startEmergency = () => {
     setCountdown(5);
     setIsCounting(true);
     setAlertSent(false);
+    setMapVisible(false);
   };
 
   const cancelEmergency = () => {
@@ -46,114 +63,196 @@ const EmergencyScreen = () => {
     }
 
     let currentLocation = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-
     setLocation({
       latitude: currentLocation.coords.latitude,
       longitude: currentLocation.coords.longitude,
     });
 
-    const resolvedAddress = await fetchAddress(currentLocation.coords.latitude, currentLocation.coords.longitude);
-    return {
-      latitude: currentLocation.coords.latitude,
-      longitude: currentLocation.coords.longitude,
-      address: resolvedAddress,
-    };
-  };
-
-  const fetchAddress = async (latitude, longitude) => {
-    try {
-      let response = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=YOUR_GOOGLE_API_KEY`
-      );
-      let json = await response.json();
-      if (json.results && json.results.length > 0) {
-        setAddress(json.results[0].formatted_address);
-        return json.results[0].formatted_address;
-      } else {
-        setAddress(null);
-        return null;
-      }
-    } catch (error) {
-      console.error(error);
-      setAddress(null);
-      return null;
-    }
+    return currentLocation.coords;
   };
 
   const handleEmergency = async () => {
     setLoading(true);
-
-    const locData = await fetchLocationFast(); // now includes address
-
+    const coords = await fetchLocationFast();
     setLoading(false);
 
-    if (!locData) {
+    if (!coords) {
       Alert.alert('Error', 'Could not get location.');
       return;
     }
 
     const userId = getAuth().currentUser.uid;
 
-    // Fetch emergency contacts
-    let contacts = [];
-    try {
-      const snapshot = await firebase.firestore()
-        .collection('emergencyContacts')
-        .where('userId', '==', userId)
-        .get();
-      contacts = snapshot.docs.map(doc => doc.data());
-    } catch (error) {
-      Alert.alert('Failed to fetch contacts', error.message);
-      return;
-    }
-
-    // Add alert to ActiveAlerts collection in Firestore
+    // Fetch user data
+    let userData = {};
     try {
       const userDoc = await firebase.firestore().collection('users').doc(userId).get();
       if (!userDoc.exists) {
         Alert.alert('Error', 'User data not found.');
         return;
       }
-      const userData = userDoc.data();
+      userData = userDoc.data();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to fetch user data.');
+      return;
+    }
 
+    // Add alert to Firestore
+    try {
       const alertData = {
         userId,
         name: userData.name || '',
         phone: userData.emergencyContact || '',
         identifyingFeature: userData.feature || '',
         photoURL: userData.profileImage || '',
-        location: new firebase.firestore.GeoPoint(locData.latitude, locData.longitude),
-        address: locData.address || '',
+        location: new firebase.firestore.GeoPoint(coords.latitude, coords.longitude),
         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
         status: 'active',
       };
-
       await firebase.firestore().collection('ActiveAlerts').add(alertData);
     } catch (error) {
-      console.error('Error adding alert to Firestore:', error);
+      console.error('Error adding alert:', error);
       Alert.alert('Error', 'Failed to save alert to database.');
       return;
     }
 
     setAlertSent(true);
+    setMapVisible(true);
+
+    await startRecording();
+
     Alert.alert('Emergency Alert Sent', 'Your emergency alert has been sent successfully.');
   };
 
+  const startRecording = async () => {
+    if (recording) return;
+
+    try {
+      const { status } = await Audio.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Denied', 'Audio recording permission is required.');
+        return;
+      }
+
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      });
+
+      const newRecording = new Audio.Recording();
+      await newRecording.prepareToRecordAsync(Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY);
+      await newRecording.startAsync();
+
+      setRecording(newRecording);
+      setIsRecording(true);
+    } catch (error) {
+      console.error('Failed to start recording', error);
+      Alert.alert('Recording Error', 'Could not start recording.');
+    }
+  };
+
+  const stopRecording = async () => {
+    if (!recording) return;
+    try {
+      await recording.stopAndUnloadAsync();
+      const uri = recording.getURI();
+
+      setRecording(null);
+      setIsRecording(false);
+
+      const userId = getAuth().currentUser.uid;
+      const fileName = `recordings/${userId}_${Date.now()}.m4a`;
+      const storageRef = firebase.storage().ref().child(fileName);
+
+      // Fetch file as blob
+      const response = await fetch(uri);
+      const blob = await response.blob();
+
+      // Upload to Firebase Storage
+      await storageRef.put(blob);
+
+      // Get download URL
+      const downloadURL = await storageRef.getDownloadURL();
+
+      // Save metadata to Firestore
+      await firebase.firestore().collection('userRecordings').add({
+        userId,
+        url: downloadURL,
+        location: location || null,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+
+      // Return to Emergency button screen
+      setMapVisible(false);
+      setAlertSent(false);
+    } catch (error) {
+      console.error('Failed to stop and upload recording', error);
+      Alert.alert('Recording Error', 'Could not stop recording or upload.');
+    }
+  };
+
+  const playRecording = async (url) => {
+    try {
+      if (!url) return;
+      const { sound } = await Audio.Sound.createAsync({ uri: url }, { shouldPlay: true });
+    } catch (error) {
+      console.error('Error playing recording:', error);
+      Alert.alert('Playback Error', 'Could not play recording.');
+    }
+  };
+
+  const subscribeToRecordings = () => {
+    const userId = getAuth().currentUser.uid;
+    return firebase.firestore()
+      .collection('userRecordings')
+      .where('userId', '==', userId)
+      .orderBy('timestamp', 'desc')
+      .onSnapshot(snapshot => {
+        const recs = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setRecordingsList(recs);
+      }, error => {
+        console.error('Error loading recordings:', error);
+      });
+  };
+
+  const renderRecordingItem = ({ item }) => (
+    <View style={styles.recordingItem}>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.recordingText}>
+          {item.timestamp ? new Date(item.timestamp.toDate()).toLocaleString() : 'No date'}
+        </Text>
+        {item.location && (
+          <Text style={styles.recordingText}>
+            Lat: {item.location.latitude.toFixed(5)}, Lng: {item.location.longitude.toFixed(5)}
+          </Text>
+        )}
+      </View>
+      <Button title="Play" onPress={() => playRecording(item.url)} />
+    </View>
+  );
+
   return (
     <View style={styles.container}>
-      {loading && <ActivityIndicator size="large" color="red" style={{ marginTop: 40 }} />}
-
-      {!alertSent && !isCounting && (
+      {!alertSent && !isCounting && !mapVisible && (
         <>
-          <Text style={styles.info}>
-            For easier access to the emergency button, go to settings to make it easily accessible.
-          </Text>
-          <TouchableOpacity onPress={startEmergency} style={styles.emergencyButton}>
-            <Text style={styles.emergencyText}>Emergency</Text>
-          </TouchableOpacity>
-          <Text style={styles.note}>
-            *An alert will be sent out to emergency contact and nearby authority
-          </Text>
+          <View style={styles.topButtonContainer}>
+            <TouchableOpacity onPress={startEmergency} style={styles.emergencyButton}>
+              <Text style={styles.emergencyText}>Emergency</Text>
+            </TouchableOpacity>
+            <Text style={styles.note}>
+              *An alert will be sent out to emergency contact and nearby authorities
+            </Text>
+          </View>
+
+          <FlatList
+            data={recordingsList}
+            keyExtractor={item => item.id}
+            renderItem={renderRecordingItem}
+            style={styles.recordingsList}
+          />
         </>
       )}
 
@@ -161,10 +260,34 @@ const EmergencyScreen = () => {
         <View style={styles.countdownWrapper}>
           <Text style={styles.countdown}>{countdown}</Text>
           <TouchableOpacity onPress={cancelEmergency} style={styles.cancelButton}>
-            <Text style={styles.cancelText}>cancel</Text>
+            <Text style={styles.cancelText}>Cancel</Text>
           </TouchableOpacity>
         </View>
       )}
+
+      {mapVisible && location && (
+        <View style={{ flex: 1, marginTop: 20 }}>
+          <MapView
+            style={{ flex: 1 }}
+            initialRegion={{
+              latitude: location.latitude,
+              longitude: location.longitude,
+              latitudeDelta: 0.01,
+              longitudeDelta: 0.01,
+            }}
+          >
+            <Marker coordinate={location} title="Your Location" pinColor="blue" />
+          </MapView>
+
+          {isRecording && (
+            <TouchableOpacity onPress={stopRecording} style={styles.stopRecordingButton}>
+              <Text style={styles.stopRecordingText}>Stop Recording</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+
+      {loading && <ActivityIndicator size="large" color="red" style={{ marginTop: 40 }} />}
     </View>
   );
 };
@@ -172,13 +295,26 @@ const EmergencyScreen = () => {
 export default EmergencyScreen;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  info: { textAlign: 'center', marginBottom: 20, fontSize: 14, color: '#444', marginTop: 100 },
-  emergencyButton: { width: 250, height: 250, borderRadius: 125, backgroundColor: 'red', alignItems: 'center', justifyContent: 'center', alignSelf: 'center', marginTop: 40 },
+  container: { flex: 1, backgroundColor: '#fff', paddingHorizontal: 10 },
+  topButtonContainer: { alignItems: 'center', marginTop: 40 },
+  emergencyButton: {
+    width: 250,
+    height: 250,
+    borderRadius: 125,
+    backgroundColor: 'red',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
   emergencyText: { color: 'white', fontSize: 28, fontWeight: 'bold' },
+  note: { marginTop: 10, fontSize: 12, color: '#555', textAlign: 'center' },
   countdownWrapper: { alignItems: 'center', marginTop: 40 },
   countdown: { fontSize: 60, color: 'red', fontWeight: 'bold', marginBottom: 20 },
   cancelButton: { borderColor: 'red', borderWidth: 3, borderRadius: 20, paddingVertical: 6, paddingHorizontal: 40 },
   cancelText: { color: 'red', fontSize: 22, fontWeight: '600' },
-  note: { marginTop: 40, fontSize: 12, color: '#555', textAlign: 'center' },
+  stopRecordingButton: { position: 'absolute', top: 10, alignSelf: 'center', backgroundColor: 'red', padding: 15, borderRadius: 12, zIndex: 10 },
+  stopRecordingText: { color: 'white', fontSize: 18, fontWeight: 'bold' },
+  recordingsList: { marginTop: 20, marginBottom: 20 },
+  recordingItem: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12, paddingHorizontal: 10, alignItems: 'center', backgroundColor: '#f2f2f2', borderRadius: 8, paddingVertical: 8 },
+  recordingText: { fontSize: 12, color: '#333' },
 });
