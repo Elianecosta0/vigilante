@@ -1,4 +1,6 @@
+
 import React, { useEffect, useState } from "react";
+
 import {
   SafeAreaView,
   View,
@@ -71,7 +73,18 @@ export default function CommunityScreen() {
     return () => unsubscribe();
   }, [allUsers]);
 
+
   // Fetch groups
+
+  // Filter users by search query safely
+  useEffect(() => {
+
+    const results = users.filter(u =>
+      (u.name || '').toLowerCase().includes((searchQuery || '').toLowerCase())
+    );
+    setSearchResults(results);
+  }, [searchQuery, users]);
+
   useEffect(() => {
     const unsubscribe = firebase
       .firestore()
@@ -98,6 +111,7 @@ export default function CommunityScreen() {
 
     return () => unsubscribe();
   }, []);
+
 
   // Combine chats & groups and apply search
   const allItems = [...conversationsMap.values(), ...groupsMap.values()]
@@ -131,6 +145,16 @@ export default function CommunityScreen() {
       Alert.alert("Error", "Unable to join group.");
     }
   };
+
+  const handleStartPrivateChat = user => {
+    navigation.navigate('PrivateChat', { userId: user.id, userName: user.name || 'User' });
+  };
+
+  const renderPrivateChat = ({ item }) => {
+    const otherUserId = item.participants.find(uid => uid !== currentUser.uid);
+    const otherUser = users.find(u => u.id === otherUserId);
+    const otherUserName = otherUser?.name || 'User';
+
 
   const handleLeaveGroup = async (group) => {
     try {
@@ -210,6 +234,7 @@ export default function CommunityScreen() {
         onChangeText={setSearchQuery}
       />
 
+
       <FlatList
         data={allItems}
         keyExtractor={(item) => item.type + "-" + item.id}
@@ -260,6 +285,41 @@ export default function CommunityScreen() {
           </TouchableOpacity>
         )}
       />
+
+      {searchQuery ? (
+        <FlatList
+          data={searchResults}
+          keyExtractor={item => item.id}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.groupItem}
+              onPress={() => handleStartPrivateChat(item)}
+            >
+              <Text style={styles.groupName}>{item.name || 'User'}</Text>
+            </TouchableOpacity>
+          )}
+        />
+      ) : (
+        <FlatList
+          data={[...privateChats, ...groups]}
+          keyExtractor={item => item.id}
+          renderItem={({ item }) =>
+            item.participants ? renderPrivateChat({ item }) : (
+              <TouchableOpacity
+                style={[styles.groupItem, joinedGroupIds.has(item.id) && styles.joinedGroup]}
+                onPress={() =>
+                  navigation.navigate('GroupChat', { groupId: item.id, groupName: item.name || 'Group' })
+                }
+              >
+                <Text style={styles.groupName}>{item.name || 'Group'}</Text>
+                {joinedGroupIds.has(item.id) && <Text style={styles.joinedBadge}>Joined</Text>}
+              </TouchableOpacity>
+            )
+          }
+          contentContainerStyle={{ paddingBottom: 120 }}
+        />
+      )}
+
     </SafeAreaView>
   );
 }

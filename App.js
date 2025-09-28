@@ -66,6 +66,7 @@ import UserProfileScreen from './Screens/UserProfileScreen';
 
 import { firebase } from './config';
 import { useEffect, useState } from 'react';
+import DonationPaymentScreen from './Screens/DonationPaymentScreen';
 
 
 const Stack = createNativeStackNavigator();
@@ -178,6 +179,7 @@ export default function App() {
                  <Stack.Screen name="MyReportsScreen" component={MyReportsScreen} />
                  <Stack.Screen name="PrivateChat" component={PrivateChatScreen} />
                  <Stack.Screen name="UserProfile" component={UserProfileScreen} />
+                 <Stack.Screen name="DonationPayment" component={DonationPaymentScreen} />
 
                   <Stack.Screen 
     name="ContactProfessionals" 
