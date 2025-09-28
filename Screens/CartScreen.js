@@ -1,3 +1,4 @@
+// Screens/CartScreen.js
 import React, { useContext } from 'react';
 import {
   View,
@@ -82,7 +83,7 @@ const CartScreen = () => {
         </View>
         <TouchableOpacity
           style={styles.checkoutButton}
-          onPress={() => navigation.navigate('CardDetails')} 
+          onPress={() => navigation.navigate('CardDetails')}
         >
           <Text style={styles.checkoutButtonText}>Checkout</Text>
         </TouchableOpacity>
@@ -94,10 +95,7 @@ const CartScreen = () => {
 export default CartScreen;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
+  container: { flex: 1, backgroundColor: '#fff' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -106,15 +104,8 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     backgroundColor: '#fff',
   },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginLeft: 16,
-  },
-  list: {
-    padding: 16,
-    paddingBottom: 180, 
-  },
+  headerTitle: { fontSize: 20, fontWeight: 'bold', marginLeft: 16 },
+  list: { padding: 16, paddingBottom: 180 },
   itemContainer: {
     flexDirection: 'row',
     marginBottom: 16,
@@ -123,45 +114,15 @@ const styles = StyleSheet.create({
     padding: 10,
     alignItems: 'center',
   },
-  image: {
-    width: 80,
-    height: 80,
-    borderRadius: 10,
-  },
-  itemDetails: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  name: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  price: {
-    color: 'gray',
-    marginTop: 4,
-  },
-  quantityRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  quantityText: {
-    marginHorizontal: 8,
-    fontSize: 16,
-  },
-  remove: {
-    color: 'red',
-    marginTop: 6,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontSize: 18,
-    color: 'gray',
-  },
+  image: { width: 80, height: 80, borderRadius: 10 },
+  itemDetails: { flex: 1, marginLeft: 12 },
+  name: { fontSize: 16, fontWeight: 'bold' },
+  price: { color: 'gray', marginTop: 4 },
+  quantityRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
+  quantityText: { marginHorizontal: 8, fontSize: 16 },
+  remove: { color: 'red', marginTop: 6 },
+  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  emptyText: { fontSize: 18, color: 'gray' },
   footer: {
     position: 'absolute',
     bottom: 20,
@@ -176,30 +137,16 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 4,
   },
-  totalRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  totalText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  totalAmount: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
+  totalRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
+  totalText: { fontSize: 18, fontWeight: 'bold' },
+  totalAmount: { fontSize: 18, fontWeight: 'bold', color: '#333' },
   checkoutButton: {
     backgroundColor: '#2f4156',
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
   },
-  checkoutButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
+  checkoutButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
 });
+
 
