@@ -68,6 +68,8 @@ import { firebase } from './config';
 import { useEffect, useState } from 'react';
 import DonationPaymentScreen from './Screens/DonationPaymentScreen';
 
+import AuthorityHomeTabs from './Screens/AuthorityHomeTabs';
+
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -180,6 +182,8 @@ export default function App() {
                  <Stack.Screen name="PrivateChat" component={PrivateChatScreen} />
                  <Stack.Screen name="UserProfile" component={UserProfileScreen} />
                  <Stack.Screen name="DonationPayment" component={DonationPaymentScreen} />
+                 <Stack.Screen name="AuthorityHomeTabs" component={AuthorityHomeTabs} />
+
 
                   <Stack.Screen 
     name="ContactProfessionals" 
