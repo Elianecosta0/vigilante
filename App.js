@@ -33,7 +33,10 @@ import DonationDetails from './Screens/DonationDetail';
 import MerchandiseScreen from './Screens/MerchandiseScreen';
 import ProductScreen from './Screens/ProductsScreen';
 import SettingsScreen from './Screens/SettingsScreen';
+
 import SelfDefenseScreen from './Screens/SelfDefenceScreen';
+import PlaylistScreen from "./Screens/PlaylistScreen";
+
 import CommentsScreen from './Screens/CommentsScreen';
 import SendReportScreen from './Screens/SendMessageScreen';
 import ReportScreen from './Screens/ReportScreen';
@@ -162,6 +165,7 @@ export default function App() {
                 <Stack.Screen name="MissingPersonDetails" component={MissingPersonDetails} />
                 <Stack.Screen name="ChatScreen" component={ChatScreen} />
                 <Stack.Screen name="Product" component={ProductScreen} />
+                <Stack.Screen name="PlaylistScreen" component={PlaylistScreen} />
                 <Stack.Screen name="CartScreen" component={CartScreen} />
                 <Stack.Screen name="CardDetails" component={CardDetails} />
                 <Stack.Screen name="ThankyouScreen" component={ThankyouScreen} />

@@ -1,7 +1,13 @@
-import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, TextInput , SafeAreaView} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { DrawerActions } from '@react-navigation/native';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  SafeAreaView,
+} from "react-native";
+import { Video } from "expo-av";
 
 const courses = [
   {
@@ -10,9 +16,7 @@ const courses = [
     instructor: "Safety Academy",
     views: "12.4K views",
     time: "3 days ago",
-    duration: "12:45",
-    image: require('../assets/photo3.jpg'),
-    isSubscribed: false,
+    video: require("../assets/Video.mp4"),
   },
   {
     id: 2,
@@ -20,9 +24,7 @@ const courses = [
     instructor: "Urban Safety",
     views: "8.7K views",
     time: "1 week ago",
-    duration: "18:22",
-    image: require('../assets/photo5.jpg'),
-    isSubscribed: true,
+    video: require("../assets/Video.mp4"),
   },
   {
     id: 3,
@@ -30,143 +32,125 @@ const courses = [
     instructor: "Self-Defense Pro",
     views: "25.1K views",
     time: "2 weeks ago",
-    duration: "15:30",
-    image: require('../assets/photo3.jpg'),
-    isSubscribed: false,
+    video: require("../assets/Video.mp4"),
   },
 ];
 
 const SelfDefenceScreen = ({ navigation }) => {
-  const [videos, setVideos] = useState(courses);
+  const [subscribed, setSubscribed] = useState({});
 
-  const toggleSubscribe = (id) => {
-    setVideos(videos.map(video => 
-      video.id === id ? { ...video, isSubscribed: !video.isSubscribed } : video
-    ));
+  const handleSubscribe = (id) => {
+    setSubscribed((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
   };
+
+  const renderItem = ({ item }) => (
+    <View style={styles.card}>
+      <TouchableOpacity
+        onPress={() =>
+          navigation.navigate("PlaylistScreen", {
+            selectedVideo: item,
+            videos: courses,
+          })
+        }
+      >
+        <Video
+          source={item.video}
+          resizeMode="cover"
+          style={styles.videoPreview}
+          shouldPlay={false}
+          isMuted
+        />
+        <View style={styles.info}>
+          <Text style={styles.title}>{item.title}</Text>
+          <Text style={styles.meta}>
+            {item.views} • {item.time}
+          </Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* Subscribe button */}
+      <TouchableOpacity
+        style={[
+          styles.subscribeButton,
+          subscribed[item.id] && styles.subscribedButton,
+        ]}
+        onPress={() => handleSubscribe(item.id)}
+      >
+        <Text
+          style={[
+            styles.subscribeText,
+            subscribed[item.id] && styles.subscribedText,
+          ]}
+        >
+          {subscribed[item.id] ? "Subscribed" : "Subscribe"}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.headerTitle}>Self-Defense Courses</Text>
-
-      {/* Drawer and Search */}
-      <View style={styles.searchContainer}>
-        <TouchableOpacity 
-          onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
-          style={styles.menuButtonInside}
-        >
-          <Ionicons name="menu" size={26} color="#333" />
-        </TouchableOpacity>
-
-        <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
-        <TextInput 
-          placeholder="Search courses..." 
-          placeholderTextColor="#999"
-          style={styles.searchInput}
-        />
-      </View>
-
-      {/* Courses List */}
+      <Text style={styles.header}>Self-Defense Courses</Text>
       <FlatList
-        data={videos}
+        data={courses}
         keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={styles.listContainer}
-        renderItem={({ item }) => (
-          <View style={styles.courseCard}>
-            <View style={styles.thumbnailContainer}>
-              <Image source={item.image} style={styles.courseImage} />
-              <Text style={styles.durationBadge}>{item.duration}</Text>
-            </View>
-            <View style={styles.courseInfo}>
-              <View style={styles.avatar}>
-                <Ionicons name="person-circle" size={36} color="#999" />
-              </View>
-              <View style={styles.textContainer}>
-                <Text style={styles.courseTitle}>{item.title}</Text>
-                <Text style={styles.instructor}>{item.instructor}</Text>
-                <Text style={styles.meta}>{item.views} • {item.time}</Text>
-              </View>
-              <TouchableOpacity style={styles.menuButton}>
-                <Ionicons name="ellipsis-vertical" size={20} color="#666" />
-              </TouchableOpacity>
-            </View>
-            <TouchableOpacity 
-              style={[
-                styles.subscribeButton,
-                item.isSubscribed && styles.subscribedButton
-              ]}
-              onPress={() => toggleSubscribe(item.id)}
-            >
-              <Text style={[
-                styles.subscribeText,
-                item.isSubscribed && styles.subscribedText
-              ]}>
-                {item.isSubscribed ? 'Subscribed' : 'Subscribe'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        contentContainerStyle={{ paddingBottom: 20 }}
+        renderItem={renderItem}
       />
     </SafeAreaView>
   );
 };
 
-
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', paddingTop: 16 },
-  headerTitle: {
+  container: { flex: 1, backgroundColor: "#fff" },
+  header: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    paddingHorizontal: 16,
-    marginBottom: 12,
+    fontWeight: "bold",
+    padding: 16,
+    color: "#222",
   },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    marginHorizontal: 16,
+  card: {
     marginBottom: 16,
-    height: 48,
+    backgroundColor: "#f9f9f9",
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.15,
+    shadowRadius: 5,
+    elevation: 5,
   },
-  menuButtonInside: { marginRight: 10 },
-  searchIcon: { marginRight: 10 },
-  searchInput: { flex: 1, fontSize: 16, color: '#333' },
-  listContainer: { paddingHorizontal: 16, paddingBottom: 20 },
-  courseCard: { marginBottom: 24 },
-  thumbnailContainer: { position: 'relative', marginBottom: 12 },
-  courseImage: { width: '100%', height: 200, borderRadius: 12 },
-  durationBadge: {
-    position: 'absolute',
-    bottom: 8,
-    right: 8,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    color: 'white',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    fontSize: 12,
+  videoPreview: {
+    width: "100%",
+    height: 200,
+    backgroundColor: "#000",
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
   },
-  courseInfo: { flexDirection: 'row', marginBottom: 12, alignItems: 'center' },
-  avatar: { marginRight: 12 },
-  textContainer: { flex: 1 },
-  courseTitle: { fontSize: 16, fontWeight: '600', color: '#333', marginBottom: 4 },
-  instructor: { fontSize: 14, color: '#666', marginBottom: 2 },
-  meta: { fontSize: 13, color: '#999' },
-  menuButton: { padding: 8 },
+  info: { padding: 10 },
+  title: { fontSize: 16, fontWeight: "600", color: "#000" },
+  meta: { fontSize: 13, color: "#666", marginTop: 4 },
+
+  // Subscribe button styles
   subscribeButton: {
-    backgroundColor: '#2f4156',
-    borderRadius: 20,
-    paddingVertical: 10,
-    alignItems: 'center',
-    marginTop: 8,
+    margin: 10,
+    backgroundColor: "#007bff",
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignItems: "center",
   },
-  subscribedButton: { backgroundColor: '#f0f0f0' },
-  subscribeText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
-  subscribedText: { color: '#666' },
+  subscribedButton: {
+    backgroundColor: "#4CAF", 
+  },
+  subscribeText: {
+    color: "#fff",
+    fontWeight: "600",
+  },
+  subscribedText: {
+    color: "#fff",
+  },
 });
 
 export default SelfDefenceScreen;
-
