@@ -151,45 +151,60 @@ const EmergencyScreen = () => {
     }
   };
 
-  const stopRecording = async () => {
-    if (!recording) return;
-    try {
-      await recording.stopAndUnloadAsync();
-      const uri = recording.getURI();
+ const stopRecording = async () => {
+  if (!recording) return;
+  try {
+    await recording.stopAndUnloadAsync();
+    const uri = recording.getURI();
 
-      setRecording(null);
-      setIsRecording(false);
+    setRecording(null);
+    setIsRecording(false);
 
-      const userId = getAuth().currentUser.uid;
-      const fileName = `recordings/${userId}_${Date.now()}.m4a`;
-      const storageRef = firebase.storage().ref().child(fileName);
+    const userId = getAuth().currentUser.uid;
 
-      // Fetch file as blob
-      const response = await fetch(uri);
-      const blob = await response.blob();
+    // 🔹 Convert to Blob
+    const response = await fetch(uri);
+    const blob = await response.blob();
 
-      // Upload to Firebase Storage
-      await storageRef.put(blob);
+    // 🔹 Upload to Cloudinary
+    const formData = new FormData();
+    formData.append("file", {
+      uri,
+      type: "audio/m4a",
+      name: `${userId}_${Date.now()}.m4a`,
+    });
+    formData.append("upload_preset", "my_app_preset"); // from Cloudinary settings
 
-      // Get download URL
-      const downloadURL = await storageRef.getDownloadURL();
+    const cloudinaryResponse = await fetch(
+      "https://api.cloudinary.com/v1_1/daeqsogvx/auto/upload",
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
 
-      // Save metadata to Firestore
-      await firebase.firestore().collection('userRecordings').add({
-        userId,
-        url: downloadURL,
-        location: location || null,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-      });
-
-      // Return to Emergency button screen
-      setMapVisible(false);
-      setAlertSent(false);
-    } catch (error) {
-      console.error('Failed to stop and upload recording', error);
-      Alert.alert('Recording Error', 'Could not stop recording or upload.');
+    const data = await cloudinaryResponse.json();
+    if (!data.secure_url) {
+      throw new Error("Cloudinary upload failed");
     }
-  };
+
+    // 🔹 Save metadata to Firestore (still keeping Firestore for metadata)
+    await firebase.firestore().collection("userRecordings").add({
+      userId,
+      url: data.secure_url, // Cloudinary URL
+      location: location || null,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+
+    // Return to Emergency button screen
+    setMapVisible(false);
+    setAlertSent(false);
+  } catch (error) {
+    console.error("Failed to stop and upload recording", error);
+    Alert.alert("Recording Error", "Could not stop recording or upload.");
+  }
+};
+
 
   const playRecording = async (url) => {
     try {
