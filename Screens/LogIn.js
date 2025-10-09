@@ -3,25 +3,28 @@ import {
   StyleSheet,
   Text,
   View,
-  TouchableOpacity,
   TextInput,
-  Image,
+  TouchableOpacity,
+  ScrollView,
   Alert,
-  ScrollView
+  Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { firebase } from '../config';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getAuth, PhoneAuthProvider, signInWithCredential } from 'firebase/auth';
+import { getAuth, signInWithCustomToken } from 'firebase/auth';
+import axios from 'axios';
+import { firebase } from '../config';
 
-// Expo Firebase Recaptcha
-import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
+const BACKEND_URL = 'https://2184388f4d68.ngrok-free.app';
+
+
 
 const LogIn = () => {
   const navigation = useNavigation();
   const auth = getAuth();
 
+  // Login states
   const [role, setRole] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -31,21 +34,18 @@ const LogIn = () => {
 
   // 2FA states
   const [phone, setPhone] = useState('');
-  const [verificationId, setVerificationId] = useState(null);
-  const [verificationCode, setVerificationCode] = useState('');
   const [is2FA, setIs2FA] = useState(false);
+  const [otp, setOtp] = useState('');
   const [resendTimer, setResendTimer] = useState(30);
   const timerRef = useRef(null);
 
-  const recaptchaVerifier = useRef(null);
-
   const togglePasswordVisibility = () => setSecureEntry(!secureEntry);
+
   const handleSignup = () => navigation.navigate('SignUp');
 
   const startTimer = () => {
     setResendTimer(30);
     if (timerRef.current) clearInterval(timerRef.current);
-
     timerRef.current = setInterval(() => {
       setResendTimer(prev => {
         if (prev <= 1) {
@@ -57,12 +57,12 @@ const LogIn = () => {
     }, 1000);
   };
 
-  // Step 1: Email/password login
+  // --- Step 1: Email/Password Login ---
   const loginUser = async () => {
     setEmailError('');
     setPasswordError('');
 
-    if (!role) { alert('Please select a role.'); return; }
+    if (!role) { alert('Please select a role'); return; }
     if (!email.trim()) { setEmailError('Email is required'); return; }
     if (!password) { setPasswordError('Password is required'); return; }
 
@@ -71,16 +71,13 @@ const LogIn = () => {
       const userId = userCredential.user.uid;
       const userDoc = await firebase.firestore().collection('users').doc(userId).get();
 
-      if (!userDoc.exists) { alert('Profile not found.'); return; }
+      if (!userDoc.exists) { alert('Profile not found'); return; }
 
       const userData = userDoc.data();
-
       if (userData.role !== role) {
-        alert(`This email is not registered as ${role}.`);
+        alert(`This email is not registered as ${role}`);
         return;
       }
-
-      
 
       if (!userData.phone) {
         alert('No phone number registered for 2FA.');
@@ -89,61 +86,51 @@ const LogIn = () => {
 
       setPhone(userData.phone);
       setIs2FA(true);
-      send2FACode(userData.phone);
+      sendOtp(userData.phone);
 
     } catch (error) {
       console.log('Login error:', error.code);
       switch (error.code) {
-        case 'auth/invalid-email': setEmailError('Please enter a valid email address.'); break;
-        case 'auth/user-not-found': setEmailError('No account found with this email.'); break;
-        case 'auth/wrong-password': setPasswordError('Incorrect password.'); break;
+        case 'auth/invalid-email': setEmailError('Invalid email'); break;
+        case 'auth/user-not-found': setEmailError('User not found'); break;
+        case 'auth/wrong-password': setPasswordError('Incorrect password'); break;
         default: alert(error.message); break;
       }
     }
   };
 
-  // Step 2: Send 2FA SMS
-  const send2FACode = async (phoneNumber) => {
+  // --- Step 2: Send OTP ---
+  const sendOtp = async (phoneNumber) => {
     try {
-      const phoneProvider = new PhoneAuthProvider(auth);
-      const id = await phoneProvider.verifyPhoneNumber(phoneNumber, recaptchaVerifier.current);
-      setVerificationId(id);
+      await axios.post(`${BACKEND_URL}/send-otp`, { phone: phoneNumber });
       startTimer();
-      Alert.alert('Verification code sent', `Code sent to ${phoneNumber}`);
-    } catch (error) {
-      console.log('2FA send error:', error);
-      Alert.alert('Failed to send verification code', error.message);
+      Alert.alert('OTP sent', `A code has been sent to ${phoneNumber}`);
+    } catch (err) {
+      console.log('Send OTP error:', err);
+      Alert.alert('Error sending OTP', err.response?.data?.error || err.message);
     }
   };
 
-  // Step 3: Verify 2FA code
-  const verify2FACode = async () => {
-    if (!verificationId) {
-      Alert.alert('Error', 'Verification ID is missing. Please resend the code.');
-      return;
-    }
-
+  // --- Step 3: Verify OTP ---
+  const verifyOtp = async () => {
     try {
-      const credential = PhoneAuthProvider.credential(verificationId, verificationCode);
-      await signInWithCredential(auth, credential);
+      const res = await axios.post(`${BACKEND_URL}/verify-otp`, { phone, otp });
+      const { token } = res.data;
+
+      // Sign in with Firebase custom token
+      await signInWithCustomToken(auth, token);
 
       if (role === 'user') navigation.replace('AppDrawer');
       else if (role === 'authority') navigation.replace('ActiveAlertsScreen');
 
-    } catch (error) {
-      console.log('2FA verify error:', error);
-      Alert.alert('Error', error.message.includes('verification code') ? 'Invalid verification code. Try again.' : error.message);
+    } catch (err) {
+      console.log('Verify OTP error:', err.response?.data || err.message);
+      Alert.alert('Invalid OTP', err.response?.data?.error || err.message);
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Firebase Recaptcha */}
-      <FirebaseRecaptchaVerifierModal
-        ref={recaptchaVerifier}
-        firebaseConfig={firebase.app().options}
-      />
-
       <ScrollView contentContainerStyle={{ padding: 20 }}>
         <View style={styles.logoContainer}>
           <Image source={require('../assets/vigilante-logo.png')} style={styles.image} resizeMode="contain" />
@@ -189,13 +176,13 @@ const LogIn = () => {
           </>
         ) : (
           <View style={{marginTop:20}}>
-            <Text style={styles.label}>Enter Verification Code sent to {phone}:</Text>
-            <TextInput style={styles.input} placeholder="123456" keyboardType="number-pad" value={verificationCode} onChangeText={setVerificationCode} />
-            <TouchableOpacity style={styles.button} onPress={verify2FACode}>
+            <Text style={styles.label}>Enter OTP sent to {phone}:</Text>
+            <TextInput style={styles.input} placeholder="123456" keyboardType="number-pad" value={otp} onChangeText={setOtp} />
+            <TouchableOpacity style={styles.button} onPress={verifyOtp}>
               <Text style={styles.buttonText}>Verify Code</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity disabled={resendTimer>0} onPress={()=>send2FACode(phone)}>
+            <TouchableOpacity disabled={resendTimer>0} onPress={()=>sendOtp(phone)}>
               <Text style={{color:resendTimer>0?'#8391A1':'#007AFF', textAlign:'center', marginTop:15}}>
                 {resendTimer>0?`Resend Code in ${resendTimer}s`:'Resend Code'}
               </Text>
@@ -206,8 +193,8 @@ const LogIn = () => {
     </SafeAreaView>
   );
 };
-
 export default LogIn;
+
 
 // Styles remain the same as your original code
 const styles = StyleSheet.create({
