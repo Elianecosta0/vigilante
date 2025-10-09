@@ -79,3 +79,7 @@ yarn-error.*
 # @end expo-cli
 
 .env
+
+backend/serviceAccountKey.json
+backend/server.js
+config.js

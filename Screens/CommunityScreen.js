@@ -1,6 +1,4 @@
-
 import React, { useEffect, useState } from "react";
-
 import {
   SafeAreaView,
   View,
@@ -11,7 +9,6 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
-  Clipboard,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -32,28 +29,30 @@ export default function CommunityScreen() {
     const unsubscribe = firebase
       .firestore()
       .collection("users")
-      .onSnapshot(snapshot => {
+      .onSnapshot((snapshot) => {
         const users = snapshot.docs
-          .map(doc => ({ id: doc.id, ...doc.data() }))
-          .filter(u => u.id !== currentUser.uid);
+          .map((doc) => ({ id: doc.id, ...doc.data() }))
+          .filter((u) => u.id !== currentUser.uid);
         setAllUsers(users);
       });
     return () => unsubscribe();
   }, []);
 
-  // Fetch private chats efficiently
+  // Fetch private chats
   useEffect(() => {
     const unsubscribe = firebase
       .firestore()
       .collection("privateChats")
       .where("participants", "array-contains", currentUser.uid)
-      .onSnapshot(snapshot => {
+      .onSnapshot((snapshot) => {
         const updatedMap = new Map();
-        snapshot.docs.forEach(doc => {
+        snapshot.docs.forEach((doc) => {
           const data = doc.data();
-          const otherUserId = data.participants.find(id => id !== currentUser.uid);
+          const otherUserId = data.participants.find(
+            (id) => id !== currentUser.uid
+          );
 
-          const userData = allUsers.find(u => u.id === otherUserId);
+          const userData = allUsers.find((u) => u.id === otherUserId);
           const name =
             (userData?.firstName && userData?.lastName
               ? `${userData.firstName} ${userData.lastName}`
@@ -73,47 +72,32 @@ export default function CommunityScreen() {
     return () => unsubscribe();
   }, [allUsers]);
 
-
   // Fetch groups
-
-  // Filter users by search query safely
-  useEffect(() => {
-
-    const results = users.filter(u =>
-      (u.name || '').toLowerCase().includes((searchQuery || '').toLowerCase())
-    );
-    setSearchResults(results);
-  }, [searchQuery, users]);
-
   useEffect(() => {
     const unsubscribe = firebase
       .firestore()
       .collection("groups")
-      .onSnapshot(snapshot => {
-        const updatedMap = new Map(groupsMap);
-        snapshot.docs.forEach(doc => {
+      .onSnapshot((snapshot) => {
+        const updatedMap = new Map();
+        snapshot.docs.forEach((doc) => {
           const data = doc.data();
-          const updatedAt = data.lastUpdated || data.createdAt || null;
-
           updatedMap.set(doc.id, {
             id: doc.id,
             name: data.name || "Unnamed Group",
             members: data.members || [],
             admins: data.admins || [],
             lastMessage: data.lastMessage || "",
-            updatedAt,
+            updatedAt: data.lastUpdated || data.createdAt || null,
             type: "group",
           });
         });
         setGroupsMap(updatedMap);
         setLoading(false);
       });
-
     return () => unsubscribe();
   }, []);
 
-
-  // Combine chats & groups and apply search
+  // Combine chats + groups
   const allItems = [...conversationsMap.values(), ...groupsMap.values()]
     .sort((a, b) => {
       const aTime = a.updatedAt?.toMillis?.() || 0;
@@ -126,11 +110,18 @@ export default function CommunityScreen() {
       return item.name.toLowerCase().includes(q);
     });
 
+  // Actions
   const openConversation = (item) => {
     if (item.type === "group") {
-      navigation.navigate("GroupChat", { groupId: item.id, groupName: item.name });
+      navigation.navigate("GroupChat", {
+        groupId: item.id,
+        groupName: item.name,
+      });
     } else {
-      navigation.navigate("PrivateChat", { userId: item.id, userName: item.name });
+      navigation.navigate("PrivateChat", {
+        userId: item.id,
+        userName: item.name,
+      });
     }
   };
 
@@ -146,16 +137,6 @@ export default function CommunityScreen() {
     }
   };
 
-  const handleStartPrivateChat = user => {
-    navigation.navigate('PrivateChat', { userId: user.id, userName: user.name || 'User' });
-  };
-
-  const renderPrivateChat = ({ item }) => {
-    const otherUserId = item.participants.find(uid => uid !== currentUser.uid);
-    const otherUser = users.find(u => u.id === otherUserId);
-    const otherUserName = otherUser?.name || 'User';
-
-
   const handleLeaveGroup = async (group) => {
     try {
       const groupRef = firebase.firestore().collection("groups").doc(group.id);
@@ -168,33 +149,23 @@ export default function CommunityScreen() {
     }
   };
 
-  const handleShareGroup = (group) => {
-    const link = `https://yourapp.com/group/${group.id}`;
-    Clipboard.setString(link);
-    Alert.alert("Group link copied!", "You can now share it with friends.");
-  };
-
   const handleCreateGroup = () => {
-    Alert.prompt(
-      "Create Group",
-      "Enter group name:",
-      async (groupName) => {
-        if (!groupName?.trim()) return;
-        try {
-          const groupRef = await firebase.firestore().collection("groups").add({
-            name: groupName.trim(),
-            members: [currentUser.uid],
-            admins: [currentUser.uid],
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
-          });
-          Alert.alert("Success", "Group created successfully!");
-        } catch (err) {
-          console.log(err);
-          Alert.alert("Error", "Failed to create group.");
-        }
+    Alert.prompt("Create Group", "Enter group name:", async (groupName) => {
+      if (!groupName?.trim()) return;
+      try {
+        await firebase.firestore().collection("groups").add({
+          name: groupName.trim(),
+          members: [currentUser.uid],
+          admins: [currentUser.uid],
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+        Alert.alert("Success", "Group created successfully!");
+      } catch (err) {
+        console.log(err);
+        Alert.alert("Error", "Failed to create group.");
       }
-    );
+    });
   };
 
   if (loading) {
@@ -202,7 +173,9 @@ export default function CommunityScreen() {
       <SafeAreaView style={styles.safeContainer}>
         <View style={styles.loading}>
           <ActivityIndicator size="large" color="#4a6fa5" />
-          <Text style={{ color: "#4a6fa5", marginTop: 10 }}>Loading chats...</Text>
+          <Text style={{ color: "#4a6fa5", marginTop: 10 }}>
+            Loading chats...
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -234,7 +207,7 @@ export default function CommunityScreen() {
         onChangeText={setSearchQuery}
       />
 
-
+      {/* List of chats & groups */}
       <FlatList
         data={allItems}
         keyExtractor={(item) => item.type + "-" + item.id}
@@ -274,59 +247,23 @@ export default function CommunityScreen() {
                     <Text style={{ color: "#fff", fontSize: 12 }}>Join</Text>
                   </TouchableOpacity>
                 )}
-                <TouchableOpacity
-                  style={styles.shareButton}
-                  onPress={() => handleShareGroup(item)}
-                >
-                  <Ionicons name="share-social" size={20} color="#fff" />
-                </TouchableOpacity>
               </View>
             )}
           </TouchableOpacity>
         )}
       />
-
-      {searchQuery ? (
-        <FlatList
-          data={searchResults}
-          keyExtractor={item => item.id}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.groupItem}
-              onPress={() => handleStartPrivateChat(item)}
-            >
-              <Text style={styles.groupName}>{item.name || 'User'}</Text>
-            </TouchableOpacity>
-          )}
-        />
-      ) : (
-        <FlatList
-          data={[...privateChats, ...groups]}
-          keyExtractor={item => item.id}
-          renderItem={({ item }) =>
-            item.participants ? renderPrivateChat({ item }) : (
-              <TouchableOpacity
-                style={[styles.groupItem, joinedGroupIds.has(item.id) && styles.joinedGroup]}
-                onPress={() =>
-                  navigation.navigate('GroupChat', { groupId: item.id, groupName: item.name || 'Group' })
-                }
-              >
-                <Text style={styles.groupName}>{item.name || 'Group'}</Text>
-                {joinedGroupIds.has(item.id) && <Text style={styles.joinedBadge}>Joined</Text>}
-              </TouchableOpacity>
-            )
-          }
-          contentContainerStyle={{ paddingBottom: 120 }}
-        />
-      )}
-
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safeContainer: { flex: 1, backgroundColor: "#e6edf5" },
-  loading: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#e6edf5" },
+  loading: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#e6edf5",
+  },
   chatbotButton: {
     backgroundColor: "#4b6e91",
     margin: 10,
@@ -387,10 +324,5 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginRight: 5,
   },
-  shareButton: {
-    backgroundColor: "#597ca3",
-    padding: 6,
-    borderRadius: 10,
-  },
 });
-};
+
