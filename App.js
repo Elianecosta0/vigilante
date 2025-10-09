@@ -33,7 +33,10 @@ import DonationDetails from './Screens/DonationDetail';
 import MerchandiseScreen from './Screens/MerchandiseScreen';
 import ProductScreen from './Screens/ProductsScreen';
 import SettingsScreen from './Screens/SettingsScreen';
+
 import SelfDefenseScreen from './Screens/SelfDefenceScreen';
+import PlaylistScreen from "./Screens/PlaylistScreen";
+
 import CommentsScreen from './Screens/CommentsScreen';
 import SendReportScreen from './Screens/SendMessageScreen';
 import ReportScreen from './Screens/ReportScreen';
@@ -67,6 +70,8 @@ import UserProfileScreen from './Screens/UserProfileScreen';
 import { firebase } from './config';
 import { useEffect, useState } from 'react';
 import DonationPaymentScreen from './Screens/DonationPaymentScreen';
+
+import AuthorityHomeTabs from './Screens/AuthorityHomeTabs';
 
 
 const Stack = createNativeStackNavigator();
@@ -163,6 +168,7 @@ export default function App() {
                 <Stack.Screen name="MissingPersonDetails" component={MissingPersonDetails} />
                 <Stack.Screen name="ChatScreen" component={ChatScreen} />
                 <Stack.Screen name="Product" component={ProductScreen} />
+                <Stack.Screen name="PlaylistScreen" component={PlaylistScreen} />
                 <Stack.Screen name="CartScreen" component={CartScreen} />
                 <Stack.Screen name="CardDetails" component={CardDetails} />
                 <Stack.Screen name="ThankyouScreen" component={ThankyouScreen} />
@@ -180,6 +186,8 @@ export default function App() {
                  <Stack.Screen name="PrivateChat" component={PrivateChatScreen} />
                  <Stack.Screen name="UserProfile" component={UserProfileScreen} />
                  <Stack.Screen name="DonationPayment" component={DonationPaymentScreen} />
+                 <Stack.Screen name="AuthorityHomeTabs" component={AuthorityHomeTabs} />
+
 
                   <Stack.Screen 
     name="ContactProfessionals" 
