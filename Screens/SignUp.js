@@ -15,7 +15,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 const SignUp = () => {
   const navigation = useNavigation();
-
   const [role, setRole] = useState('');
 
   // User fields
@@ -57,7 +56,7 @@ const SignUp = () => {
           return;
         }
 
-        const docRef = firebase.firestore().collection('Authorities').doc(securityNumber);
+        const docRef = firebase.firestore().collection('authorities').doc(securityNumber);
         const doc = await docRef.get();
 
         if (!doc.exists) {
@@ -88,9 +87,8 @@ const SignUp = () => {
 
       } else if (role === 'user') {
         if (
-          !firstName.trim() || !lastName.trim() || !dob.trim() || !emergencyContact.trim() ||
-          !gender.trim() || !height.trim() || !identifyingFeature.trim() ||
-          !username.trim() || !phone.trim() || !password || !confirmPassword
+          !firstName.trim() || !lastName.trim() || !dob.trim() || !emergencyContact.trim() || !gender.trim() ||
+          !height.trim() || !identifyingFeature.trim() || !username.trim() || !phone.trim() || !password || !confirmPassword
         ) {
           Alert.alert('Error', 'Please fill all fields for user.');
           setLoading(false);
@@ -206,106 +204,29 @@ const SignUp = () => {
         {role === 'user' && (
           <>
             <Text style={styles.label}>First Name:</Text>
-            <TextInput
-              style={styles.input}
-              value={firstName}
-              onChangeText={setFirstName}
-              placeholder="Enter first name"
-              autoCapitalize="words"
-            />
+            <TextInput style={styles.input} value={firstName} onChangeText={setFirstName} placeholder="Enter first name" autoCapitalize="words" />
             <Text style={styles.label}>Last Name:</Text>
-            <TextInput
-              style={styles.input}
-              value={lastName}
-              onChangeText={setLastName}
-              placeholder="Enter last name"
-              autoCapitalize="words"
-            />
+            <TextInput style={styles.input} value={lastName} onChangeText={setLastName} placeholder="Enter last name" autoCapitalize="words" />
             <Text style={styles.label}>Date of Birth:</Text>
-            <TextInput
-              style={styles.input}
-              value={dob}
-              onChangeText={setDob}
-              placeholder="YYYY-MM-DD"
-              autoCapitalize="none"
-            />
+            <TextInput style={styles.input} value={dob} onChangeText={setDob} placeholder="YYYY-MM-DD" autoCapitalize="none" />
             <Text style={styles.label}>Emergency Contact:</Text>
-            <TextInput
-              style={styles.input}
-              value={emergencyContact}
-              onChangeText={setEmergencyContact}
-              placeholder="Enter emergency contact"
-              keyboardType="phone-pad"
-            />
+            <TextInput style={styles.input} value={emergencyContact} onChangeText={setEmergencyContact} placeholder="Enter emergency contact" keyboardType="phone-pad" />
             <Text style={styles.label}>Gender:</Text>
-            <TextInput
-              style={styles.input}
-              value={gender}
-              onChangeText={setGender}
-              placeholder="Enter gender"
-              autoCapitalize="none"
-            />
+            <TextInput style={styles.input} value={gender} onChangeText={setGender} placeholder="Enter gender" autoCapitalize="none" />
             <Text style={styles.label}>Height:</Text>
-            <TextInput
-              style={styles.input}
-              value={height}
-              onChangeText={setHeight}
-              placeholder="Enter height"
-              keyboardType="numeric"
-              autoCapitalize="none"
-            />
+            <TextInput style={styles.input} value={height} onChangeText={setHeight} placeholder="Enter height" keyboardType="numeric" autoCapitalize="none" />
             <Text style={styles.label}>Weight:</Text>
-            <TextInput
-              style={styles.input}
-              value={weight}
-              onChangeText={setWeight}
-              placeholder="Enter weight"
-              keyboardType="numeric"
-              autoCapitalize="none"
-            />
+            <TextInput style={styles.input} value={weight} onChangeText={setWeight} placeholder="Enter weight" keyboardType="numeric" autoCapitalize="none" />
             <Text style={styles.label}>Identifying Feature:</Text>
-            <TextInput
-              style={styles.input}
-              value={identifyingFeature}
-              onChangeText={setIdentifyingFeature}
-              placeholder="Enter identifying feature"
-              autoCapitalize="none"
-            />
+            <TextInput style={styles.input} value={identifyingFeature} onChangeText={setIdentifyingFeature} placeholder="Enter identifying feature" autoCapitalize="none" />
             <Text style={styles.label}>Username:</Text>
-            <TextInput
-              style={styles.input}
-              value={username}
-              onChangeText={setUsername}
-              placeholder="Enter username"
-              autoCapitalize="none"
-            />
+            <TextInput style={styles.input} value={username} onChangeText={setUsername} placeholder="Enter username" autoCapitalize="none" />
             <Text style={styles.label}>Phone:</Text>
-            <TextInput
-              style={styles.input}
-              value={phone}
-              onChangeText={setPhone}
-              placeholder="Enter phone"
-              keyboardType="phone-pad"
-              autoCapitalize="none"
-            />
-
+            <TextInput style={styles.input} value={phone} onChangeText={setPhone} placeholder="Enter phone" keyboardType="phone-pad" autoCapitalize="none" />
             <Text style={styles.label}>Password:</Text>
-            <TextInput
-              style={styles.input}
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Enter password"
-              secureTextEntry
-            />
-
+            <TextInput style={styles.input} value={password} onChangeText={setPassword} placeholder="Enter password" secureTextEntry />
             <Text style={styles.label}>Confirm Password:</Text>
-            <TextInput
-              style={styles.input}
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              placeholder="Confirm password"
-              secureTextEntry
-            />
+            <TextInput style={styles.input} value={confirmPassword} onChangeText={setConfirmPassword} placeholder="Confirm password" secureTextEntry />
           </>
         )}
 
