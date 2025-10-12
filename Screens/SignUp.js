@@ -8,6 +8,7 @@ import {
   Image,
   Alert,
   ScrollView,
+  Modal,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { firebase } from '../config';
@@ -31,10 +32,23 @@ const SignUp = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
+  // PIN Verification Fields
+  const [pin, setPin] = useState('');
+  const [confirmPin, setConfirmPin] = useState('');
+
   // Authority field
   const [securityNumber, setSecurityNumber] = useState('');
 
   const [loading, setLoading] = useState(false);
+
+  // Function to hash PIN (simple implementation - in production use bcrypt)
+  const hashPin = async (pin) => {
+    // For now using simple hash, consider using bcrypt in production
+    return pin.split('').reduce((a, b) => {
+      a = ((a << 5) - a) + b.charCodeAt(0);
+      return a & a;
+    }, 0).toString();
+  };
 
   const handleSignUp = async () => {
     setLoading(true);
@@ -45,9 +59,25 @@ const SignUp = () => {
       return;
     }
 
+    // Validate PIN
+    if (!pin || pin.length !== 6 || !/^\d+$/.test(pin)) {
+      Alert.alert('Error', 'Please enter a valid 6-digit PIN.');
+      setLoading(false);
+      return;
+    }
+
+    if (pin !== confirmPin) {
+      Alert.alert('Error', 'PIN codes do not match.');
+      setLoading(false);
+      return;
+    }
+
     try {
       let emailToUse = '';
       let userData = {};
+
+      // Hash the PIN
+      const hashedPin = await hashPin(pin);
 
       if (role === 'authority') {
         if (!securityNumber || !password || !confirmPassword) {
@@ -66,7 +96,12 @@ const SignUp = () => {
         }
 
         emailToUse = `${securityNumber}@vigilante.com`;
-        userData = { ...doc.data(), role: 'authority', email: emailToUse };
+        userData = { 
+          ...doc.data(), 
+          role: 'authority', 
+          email: emailToUse,
+          pinCode: hashedPin 
+        };
 
         let userCredential;
         try {
@@ -111,6 +146,7 @@ const SignUp = () => {
           phone: phone.trim(),
           role: 'user',
           email: emailToUse,
+          pinCode: hashedPin,
         };
 
         let userCredential;
@@ -197,6 +233,27 @@ const SignUp = () => {
               placeholder="Confirm password"
               secureTextEntry
             />
+
+            {/* PIN Fields for Authority */}
+            <Text style={styles.label}>6-Digit PIN:</Text>
+            <TextInput
+              style={styles.input}
+              value={pin}
+              onChangeText={setPin}
+              placeholder="Enter 6-digit PIN"
+              keyboardType="number-pad"
+              maxLength={6}
+            />
+
+            <Text style={styles.label}>Confirm PIN:</Text>
+            <TextInput
+              style={styles.input}
+              value={confirmPin}
+              onChangeText={setConfirmPin}
+              placeholder="Confirm 6-digit PIN"
+              keyboardType="number-pad"
+              maxLength={6}
+            />
           </>
         )}
 
@@ -227,6 +284,27 @@ const SignUp = () => {
             <TextInput style={styles.input} value={password} onChangeText={setPassword} placeholder="Enter password" secureTextEntry />
             <Text style={styles.label}>Confirm Password:</Text>
             <TextInput style={styles.input} value={confirmPassword} onChangeText={setConfirmPassword} placeholder="Confirm password" secureTextEntry />
+
+            {/* PIN Fields for User */}
+            <Text style={styles.label}>6-Digit PIN:</Text>
+            <TextInput
+              style={styles.input}
+              value={pin}
+              onChangeText={setPin}
+              placeholder="Enter 6-digit PIN"
+              keyboardType="number-pad"
+              maxLength={6}
+            />
+
+            <Text style={styles.label}>Confirm PIN:</Text>
+            <TextInput
+              style={styles.input}
+              value={confirmPin}
+              onChangeText={setConfirmPin}
+              placeholder="Confirm 6-digit PIN"
+              keyboardType="number-pad"
+              maxLength={6}
+            />
           </>
         )}
 
