@@ -45,6 +45,8 @@ export default function ChatbotScreen() {
 
   const getAIResponse = async (userInput) => {
     try {
+      console.log("Loaded API key:", OPENAI_API_KEY);
+
       const res = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
