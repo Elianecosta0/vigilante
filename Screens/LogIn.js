@@ -227,6 +227,12 @@ const LogIn = () => {
         setCurrentUser(userCredential.user);
         setUserData(userData);
         setShowPinModal(true);
+        const userRole = userData.role || 'user';
+        if (userRole === 'authority') {
+          navigation.navigate('AuthorityHomeTabs');
+        } else {
+          navigation.navigate('AppDrawer');
+        }
         return;
       }
 
@@ -239,6 +245,7 @@ const LogIn = () => {
         setCurrentUser(userCredential.user);
         setUserData({ ...authorityData, role: 'authority' });
         setShowPinModal(true);
+        navigation.navigate('AuthorityHomeTabs');
         return;
       }
 
